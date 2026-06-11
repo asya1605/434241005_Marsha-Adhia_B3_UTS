@@ -85,44 +85,33 @@ class _TicketHistoryScreenState extends State<TicketHistoryScreen> {
 
   Widget _buildEmptyState(bool isDark) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E2438) : const Color(0xFFEFF6FF),
-                shape: BoxShape.circle,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/empty_ticket.png',
+                width: 180,
+                height: 180,
+                fit: BoxFit.contain,
               ),
-              child: const Icon(
-                Icons.assignment_late_outlined,
-                size: 36,
-                color: Color(0xFF2563EB),
+              const SizedBox(height: 16),
+              const Text(
+                'Belum Ada Tiket',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Belum ada tiket',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF111827),
+              const SizedBox(height: 8),
+              const Text(
+                'Silakan buat tiket baru untuk memulai.',
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Tiket yang Anda buat akan muncul di sini sebagai riwayat.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.white38 : const Color(0xFF6B7280),
-                height: 1.5,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

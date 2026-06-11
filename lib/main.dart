@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/theme/app_theme.dart';
 import 'splash/splash_screen.dart';
 import 'core/theme/theme_provider.dart';
 
@@ -23,9 +24,7 @@ Future<void> main() async {
     ),
   );
 
-  /// LOGOUT USER 
-  await Supabase.instance.client.auth.signOut();
-
+  // Check user session
   print("USER: ${Supabase.instance.client.auth.currentUser?.email}"); 
      
   runApp(
@@ -80,17 +79,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       /// LIGHT MODE
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primaryColor: const Color(0xFFE91E8C),
-        scaffoldBackgroundColor: Colors.white,
-      ),
+      theme: AppTheme.lightTheme,
 
       /// DARK MODE
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFFE91E8C),
-      ),
+      darkTheme: AppTheme.darkTheme,
 
       /// THEME MODE
       themeMode: themeProvider.themeMode,

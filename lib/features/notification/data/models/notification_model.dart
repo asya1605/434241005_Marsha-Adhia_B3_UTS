@@ -5,6 +5,7 @@ class NotificationModel {
   final String message;
   final bool isRead;
   final String createdAt;
+  final String? ticketId;
 
   NotificationModel({
     required this.id,
@@ -13,6 +14,7 @@ class NotificationModel {
     required this.message,
     required this.isRead,
     required this.createdAt,
+    this.ticketId,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +25,7 @@ class NotificationModel {
       "message": message,
       "is_read": isRead,
       "created_at": createdAt,
+      "ticket_id": ticketId,
     };
   }
 
@@ -34,6 +37,7 @@ class NotificationModel {
       message: map["message"] ?? "No Message",
       isRead: map["is_read"] ?? false,
       createdAt: map["created_at"] ?? DateTime.now().toString(),
+      ticketId: map["ticket_id"]?.toString(),
     );
   }
 }

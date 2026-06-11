@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../ticket/presentation/providers/ticket_provider.dart';
 import '../../../ticket/presentation/pages/ticket_list_screen.dart';
 import '../../../ticket/presentation/pages/create_ticket_screen.dart';
@@ -8,6 +10,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 
 import '../providers/dashboard_provider.dart';
 import '../widgets/stat_card.dart';
+import '../widgets/dashboard_shimmer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,12 +24,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      final ticketProvider = context.read<TicketProvider>();
-      context.read<DashboardProvider>().loadDashboard(
+    final authProvider = context.read<AuthProvider>();
+    final ticketProvider = context.read<TicketProvider>();
+    final dashboardProvider = context.read<DashboardProvider>();
+
+    Future.microtask(() async {
+      await authProvider.checkLoginStatus();
+      
+      if (mounted) {
+        final role = authProvider.role ?? "user";
+        
+        // Load tickets dynamically based on the current user's role
+        await ticketProvider.loadTickets(role: role);
+        
+        if (mounted) {
+          // Process statistics in the DashboardProvider
+          dashboardProvider.loadDashboard(
             ticketProvider.tickets,
           );
-      context.read<AuthProvider>().checkLoginStatus();
+        }
+      }
     });
   }
 
@@ -35,53 +52,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final dashboard = context.watch<DashboardProvider>();
     final ticketProvider = context.watch<TicketProvider>();
     final authProvider = context.watch<AuthProvider>();
+    
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final role = authProvider.role ?? "user";
+    
+    // Show shimmer skeleton screen while loading
+    if (ticketProvider.isLoading || dashboard.isLoading) {
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
+        body: SafeArea(
+          child: DashboardShimmer(showCreateCta: role == 'user'),
+        ),
+      );
+    }
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
+      backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+        child: RefreshIndicator(
+          color: AppColors.blue,
+          onRefresh: () async {
+            final dProvider = context.read<DashboardProvider>();
+            await ticketProvider.loadTickets(role: role);
+            dProvider.loadDashboard(ticketProvider.tickets);
+          },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// ── 1. HEADER ───────────────────────────────────────────
+                /// ── 1. HEADER (Dynamic per Role) ───────────────────────────
                 _buildHeader(authProvider, isDark),
 
-                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// ── 2. CREATE TICKET CTA (User Role Only) ─────────────────
+                      if (role == 'user') ...[
+                        _buildCreateTicketCTA(context),
+                        const SizedBox(height: 24),
+                      ],
 
-                /// ── 2. CREATE TICKET CTA ─────────────────────────────────
-                _buildCreateTicketCTA(context),
+                      /// ── 3. OVERVIEW SECTION ──────────────────────────────────
+                      _SectionHeader(
+                        title: role == 'user'
+                            ? 'My Tickets Overview'
+                            : role == 'helpdesk'
+                                ? 'My Workload'
+                                : 'Global Overview',
+                      ),
+                      const SizedBox(height: 12),
 
-                const SizedBox(height: 28),
-
-                /// ── 3. OVERVIEW SECTION ──────────────────────────────────
-                _SectionHeader(title: 'Overview'),
-                const SizedBox(height: 14),
-
-                dashboard.isLoading
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 32),
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF2563EB),
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                      )
-                    : GridView.count(
+                      GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisCount: 2,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        childAspectRatio: 1.1,
+                        childAspectRatio: 1.38,
                         children: [
                           StatCard(
-                            title: "Total Tickets",
+                            title: role == 'helpdesk' ? "Total Assigned" : "Total Tickets",
                             number: dashboard.total.toString(),
                             icon: Icons.confirmation_number_outlined,
                             gradient: const LinearGradient(
@@ -95,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             number: dashboard.open.toString(),
                             icon: Icons.folder_open_outlined,
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF0891B2), Color(0xFF67E8F9)],
+                              colors: [Color(0xFF06B6D4), Color(0xFF67E8F9)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -105,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             number: dashboard.pending.toString(),
                             icon: Icons.hourglass_empty_outlined,
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFD97706), Color(0xFFFCD34D)],
+                              colors: [Color(0xFFF59E0B), Color(0xFFFCD34D)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -115,7 +148,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             number: dashboard.closed.toString(),
                             icon: Icons.check_circle_outline,
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF059669), Color(0xFF34D399)],
+                              colors: [Color(0xFF10B981), Color(0xFF34D399)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -123,19 +156,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
 
-                const SizedBox(height: 28),
+                      const SizedBox(height: 28),
 
-                /// ── 4. RECENT TICKETS SECTION ────────────────────────────
-                _SectionHeader(title: 'Recent Tickets'),
-                const SizedBox(height: 14),
+                      /// ── 4. RECENT TICKETS SECTION ────────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _SectionHeader(
+                            title: role == 'helpdesk' ? 'Assigned Tickets' : 'Recent Tickets',
+                          ),
+                          if (ticketProvider.tickets.length > 5)
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const TicketListScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'View All',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.blue,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
 
-                _buildRecentTickets(
-                  context,
-                  ticketProvider,
-                  isDark,
+                      _buildRecentTickets(
+                        context,
+                        ticketProvider,
+                        role,
+                        isDark,
+                      ),
+                    ],
+                  ),
                 ),
-
-                const SizedBox(height: 12),
               ],
             ),
           ),
@@ -144,33 +205,153 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ─── HEADER ──────────────────────────────────────────────────────────────
+  // ─── HEADER (Unified and Themed dynamically by Role) ──────────────────────
 
   Widget _buildHeader(AuthProvider authProvider, bool isDark) {
     final name = authProvider.name ?? "User";
-    final role = authProvider.role?.toUpperCase() ?? "USER";
+    final role = (authProvider.role ?? "user").toLowerCase();
+
+    // Setup role specific visual properties
+    Gradient headerGradient;
+    Widget roleBadge;
+    String panelTitle;
+    String initialLetter = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : "U";
+
+    if (role == 'admin') {
+      panelTitle = 'Administrator Panel';
+      headerGradient = LinearGradient(
+        colors: isDark
+            ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+            : [const Color(0xFF1E3A8A), const Color(0xFF2563EB)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      roleBadge = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFBBF24).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFFBBF24).withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.shield_outlined, size: 12, color: Color(0xFFFBBF24)),
+            const SizedBox(width: 4),
+            Text(
+              'ADMIN',
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFFFBBF24),
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (role == 'helpdesk') {
+      panelTitle = 'Helpdesk Agent Panel';
+      headerGradient = LinearGradient(
+        colors: isDark
+            ? [const Color(0xFF2D1E4E), const Color(0xFF1A1235)]
+            : [const Color(0xFF5B21B6), const Color(0xFF7C3AED)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      roleBadge = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFA78BFA).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFA78BFA).withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.headset_mic_outlined, size: 12, color: Color(0xFFA78BFA)),
+            const SizedBox(width: 4),
+            Text(
+              'HELPDESK',
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFFA78BFA),
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      panelTitle = 'User Portal';
+      headerGradient = LinearGradient(
+        colors: isDark
+            ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+            : [const Color(0xFF1E40AF), const Color(0xFF3B82F6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      roleBadge = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF60A5FA).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFF60A5FA).withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.person_outline_rounded, size: 12, color: Color(0xFF60A5FA)),
+            const SizedBox(width: 4),
+            Text(
+              'USER',
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF60A5FA),
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1A1F35), const Color(0xFF0D1321)]
-              : [const Color(0xFF1E40AF), const Color(0xFF3B82F6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        gradient: headerGradient,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
-        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -181,8 +362,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    name.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
+                    initialLetter,
+                    style: GoogleFonts.outfit(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -197,50 +378,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       'Welcome, $name 👋',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
-                        letterSpacing: -0.2,
+                        letterSpacing: -0.3,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'System Helpdesk',
-                      style: TextStyle(
+                      panelTitle,
+                      style: GoogleFonts.outfit(
                         fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Text(
-                  role,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
+              const SizedBox(width: 8),
+              roleBadge,
             ],
           ),
-          const SizedBox(height: 16),
-          Container(height: 1, color: Colors.white.withValues(alpha: 0.1)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
+          Container(height: 1, color: Colors.white.withValues(alpha: 0.12)),
+          const SizedBox(height: 14),
           Row(
             children: [
               Icon(
@@ -251,24 +416,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 6),
               Text(
                 _formattedDate(),
-                style: TextStyle(
+                style: GoogleFonts.outfit(
                   fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: Colors.white.withValues(alpha: 0.65),
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const Spacer(),
-              const CircleAvatar(
-                radius: 3,
-                backgroundColor: Color(0xFF10B981),
-              ),
-              const SizedBox(width: 5),
-              const Text(
-                'Online',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF10B981),
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircleAvatar(
+                      radius: 3,
+                      backgroundColor: Color(0xFF10B981),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Online',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: const Color(0xFF10B981),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -278,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ─── CREATE TICKET CTA ─────────────────────────────────────────────────
+  // ─── CREATE TICKET CTA (User Only) ─────────────────────────────────────
 
   Widget _buildCreateTicketCTA(BuildContext context) {
     return GestureDetector(
@@ -292,7 +472,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF2563EB), Color(0xFF60A5FA)],
@@ -302,8 +482,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-              blurRadius: 12,
+              color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -324,25 +504,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Create New Ticket',
-                    style: TextStyle(
+                    style: GoogleFonts.outfit(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                       letterSpacing: -0.2,
                     ),
                   ),
-                  SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     'Report an issue or request support',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white70,
+                    style: GoogleFonts.outfit(
+                      fontSize: 11.5,
+                      color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -350,7 +530,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const Icon(
               Icons.arrow_forward_ios_rounded,
-              color: Colors.white54,
+              color: Colors.white70,
               size: 14,
             ),
           ],
@@ -364,57 +544,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildRecentTickets(
     BuildContext context,
     TicketProvider ticketProvider,
+    String role,
     bool isDark,
   ) {
-    if (ticketProvider.isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: CircularProgressIndicator(
-            color: Color(0xFF2563EB),
-            strokeWidth: 2.5,
-          ),
-        ),
-      );
-    }
-
     final tickets = ticketProvider.tickets;
 
     if (tickets.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 40),
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161B2E) : Colors.white,
+          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.06)
-                : const Color(0xFFE5E7EB),
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            width: 1,
           ),
         ),
         child: Column(
           children: [
             Icon(
               Icons.inbox_outlined,
-              size: 40,
-              color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+              size: 44,
+              color: isDark ? Colors.white24 : AppColors.textHint,
             ),
             const SizedBox(height: 12),
             Text(
-              'No tickets yet',
-              style: TextStyle(
+              role == 'helpdesk' ? 'No assigned tickets' : 'No tickets yet',
+              style: GoogleFonts.outfit(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                color: isDark ? Colors.white54 : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Create your first ticket to get started',
-              style: TextStyle(
+              role == 'helpdesk'
+                  ? "You're completely caught up!"
+                  : 'Create your first ticket to get started',
+              style: GoogleFonts.outfit(
                 fontSize: 12,
-                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                color: isDark ? Colors.white24 : AppColors.textHint,
               ),
             ),
           ],
@@ -425,65 +595,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final recentTickets = tickets.length > 5 ? tickets.sublist(0, 5) : tickets;
 
     return Column(
-      children: [
-        ...recentTickets.map(
-          (ticket) => _ticketListItem(context, ticket, isDark),
-        ),
-        if (tickets.length > 5)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const TicketListScreen(),
-                  ),
-                );
-              },
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'View All Tickets',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2563EB),
-                    ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 14,
-                    color: Color(0xFF2563EB),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
+      children: recentTickets.map((ticket) {
+        return _ticketListItem(context, ticket, role, isDark);
+      }).toList(),
     );
   }
 
-  Widget _ticketListItem(BuildContext context, dynamic ticket, bool isDark) {
+  Widget _ticketListItem(
+    BuildContext context,
+    dynamic ticket,
+    String role,
+    bool isDark,
+  ) {
     final statusColor = _statusColor(ticket.status);
+    final hasMetadata = (role == 'admin' || role == 'helpdesk');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161B2E) : Colors.white,
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : const Color(0xFFE5E7EB),
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          width: 1,
         ),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -492,6 +632,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: IntrinsicHeight(
         child: Row(
           children: [
+            /// Left accent status line
             Container(
               width: 4,
               decoration: BoxDecoration(
@@ -502,64 +643,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+
+            /// Ticket main content
             Expanded(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                child: Row(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             ticket.title,
-                            style: TextStyle(
+                            style: GoogleFonts.outfit(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF111827),
+                              color: isDark ? Colors.white : AppColors.textPrimary,
                               letterSpacing: -0.1,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            ticket.description,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? Colors.white54
-                                  : const Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 8),
+
+                        /// Status Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.3),
+                              width: 1,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
+                          child: Text(
+                            ticket.status,
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      ticket.description,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    /// Extra Role Specific Metadata (Admin / Helpdesk only)
+                    if (hasMetadata) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 1,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : AppColors.borderLight.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline_rounded,
+                            size: 13,
+                            color: isDark ? Colors.white30 : AppColors.textHint,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'User: ${ticket.userId.toString().length > 8 ? "${ticket.userId.toString().substring(0, 8)}..." : ticket.userId}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white30 : AppColors.textHint,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          if (ticket.assignedTo != null) ...[
+                            const SizedBox(width: 12),
+                            Icon(
+                              Icons.headset_mic_outlined,
+                              size: 13,
+                              color: isDark ? Colors.white30 : AppColors.textHint,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                ticket.assignedName ?? 'Assigned',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white30 : AppColors.textHint,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        ticket.status,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: statusColor,
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -573,31 +769,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case 'Open':
-        return const Color(0xFF0891B2);
+        return AppColors.statusOpen;
       case 'Pending':
-        return const Color(0xFFD97706);
+        return AppColors.statusPending;
       case 'Closed':
-        return const Color(0xFF059669);
+        return AppColors.statusClosed;
       default:
-        return const Color(0xFF64748B);
+        return AppColors.textHint;
     }
   }
 
   String _formattedDate() {
     final now = DateTime.now();
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final weekday = days[now.weekday - 1];
@@ -605,6 +791,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return '$weekday, ${now.day} $month ${now.year}';
   }
 }
+
+// ─── Section Header ──────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -619,17 +807,17 @@ class _SectionHeader extends StatelessWidget {
           width: 3,
           height: 18,
           decoration: BoxDecoration(
-            color: const Color(0xFF2563EB),
+            color: AppColors.blue,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
         const SizedBox(width: 10),
         Text(
           title,
-          style: TextStyle(
+          style: GoogleFonts.outfit(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF111827),
+            color: isDark ? Colors.white : AppColors.textPrimary,
             letterSpacing: -0.2,
           ),
         ),
@@ -637,3 +825,4 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
+

@@ -62,4 +62,9 @@ class TicketProvider extends ChangeNotifier {
 
     await loadTickets(role: currentRole);
   }
+
+  /// GET TICKET BY ID
+  Future<TicketModel?> getTicketById(String id) async {
+    return await _repository.getTicketById(id);
+  }
 }

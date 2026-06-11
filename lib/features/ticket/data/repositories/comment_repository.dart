@@ -21,17 +21,18 @@ class CommentRepository {
   Future<void> addComment({
     required String ticketId,
     required String message,
+    required String role,
   }) async {
     final user = supabase.auth.currentUser;
     if (user == null) {
-  throw Exception("User not logged in");
-}
+      throw Exception("User not logged in");
+    }
 
     await supabase.from('comments').insert({
       'ticket_id': ticketId,
       'user_id': user.id,
       'message': message,
-      'role': 'user', 
+      'role': role, 
     });
   }
 }

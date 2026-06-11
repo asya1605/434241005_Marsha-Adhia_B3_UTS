@@ -22,11 +22,12 @@ class CommentProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> sendComment(String ticketId, String message) async {
+  Future<void> sendComment(String ticketId, String message, String role) async {
     try {
       await _repository.addComment(
         ticketId: ticketId,
         message: message,
+        role: role,
       );
       // Reload comments after sending
       await loadComments(ticketId);

@@ -48,4 +48,25 @@ class NotificationRepository {
         });
   }
 
+  Future<void> markAsRead(String id) async {
+    await _supabase
+        .from('notifications')
+        .update({'is_read': true})
+        .eq('id', id);
+  }
+
+  Future<void> markAllAsRead(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await _supabase
+        .from('notifications')
+        .update({'is_read': true})
+        .inFilter('id', ids);
+  }
+
+  Future<void> deleteNotification(String id) async {
+    await _supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id);
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/notification_provider.dart';
 import '../widgets/notification_tile.dart';
@@ -14,18 +15,71 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
+  String _filter = 'All'; // 'All', 'Unread', 'Read'
+
   @override
   void initState() {
     super.initState();
 
     Future.microtask(() {
       final userId = context.read<AuthProvider>().userId;
-
       if (userId != null) {
         context.read<NotificationProvider>().initNotifications(userId);
-      } else {
       }
     });
+  }
+
+  Widget _buildFilterChips(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
+      child: Row(
+        children: [
+          _buildFilterChip('All', 'Semua', isDark),
+          const SizedBox(width: 8),
+          _buildFilterChip('Unread', 'Belum Dibaca', isDark),
+          const SizedBox(width: 8),
+          _buildFilterChip('Read', 'Dibaca', isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String filterType, String label, bool isDark) {
+    final isSelected = _filter == filterType;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: GoogleFonts.outfit(
+          fontSize: 12.5,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          color: isSelected
+              ? Colors.white
+              : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: const Color(0xFF2563EB),
+      backgroundColor: isDark ? const Color(0xFF1E293B).withOpacity(0.5) : Colors.white,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() {
+            _filter = filterType;
+          });
+        }
+      },
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isSelected
+              ? const Color(0xFF2563EB)
+              : (isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFE2E8F0)),
+          width: 1.2,
+        ),
+      ),
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+    );
   }
 
   @override
@@ -37,22 +91,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
       backgroundColor:
           isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF161B2E) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
         elevation: 0,
         scrolledUnderElevation: 1,
         shadowColor: Colors.black12,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: isDark ? Colors.white : const Color(0xFF111827),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: isDark ? Colors.white : const Color(0xFF111827),
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: Text(
           'Notifications',
-          style: TextStyle(
-            fontSize: 17,
+          style: GoogleFonts.outfit(
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF111827),
             letterSpacing: -0.3,
@@ -62,31 +118,46 @@ class _NotificationScreenState extends State<NotificationScreen> {
           StreamBuilder<List<NotificationModel>>(
             stream: provider.notificationStream,
             builder: (context, snapshot) {
-              // Update cache if new data arrives
               if (snapshot.hasData) {
                 provider.cachedNotifications = snapshot.data!;
               }
 
-              final count = snapshot.data?.length ?? provider.cachedNotifications.length;
+              final list = snapshot.data ?? provider.cachedNotifications;
+              final unreadCount = list.where((n) => !n.isRead).length;
 
-              if (count > 0) {
+              if (unreadCount > 0) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      final unreadIds = list.where((n) => !n.isRead).map((n) => n.id).toList();
+                      if (unreadIds.isNotEmpty) {
+                        provider.markAllAsRead(unreadIds);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Semua notifikasi ditandai dibaca',
+                              style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.done_all_rounded,
+                      size: 18,
+                      color: Color(0xFF2563EB),
+                    ),
+                    label: Text(
+                      'Baca Semua',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
                         color: const Color(0xFF2563EB),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
                       ),
                     ),
                   ),
@@ -106,100 +177,88 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ),
       ),
-      body: StreamBuilder<List<NotificationModel>>(
-        stream: provider.notificationStream,
-        builder: (context, snapshot) {
-          print("📡 SNAPSHOT DATA: ${snapshot.data}");
-          print("📡 SNAPSHOT ERROR: ${snapshot.error}");
+      body: Column(
+        children: [
+          _buildFilterChips(isDark),
+          Expanded(
+            child: StreamBuilder<List<NotificationModel>>(
+              stream: provider.notificationStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  provider.cachedNotifications = snapshot.data!;
+                }
 
-          // Update cache if new data arrives successfully
-          if (snapshot.hasData) {
-            provider.cachedNotifications = snapshot.data!;
-          }
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    provider.cachedNotifications.isEmpty) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF2563EB),
+                      strokeWidth: 2.5,
+                    ),
+                  );
+                }
 
-          if (snapshot.connectionState == ConnectionState.waiting && provider.cachedNotifications.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF2563EB),
-                strokeWidth: 2.5,
-              ),
-            );
-          }
+                if (snapshot.hasError) {
+                  debugPrint("Realtime stream error: ${snapshot.error}");
+                }
 
-          if (snapshot.hasError) {
-             return Column(
-               children: [
-                 Container(
-                   width: double.infinity,
-                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                   color: Colors.redAccent.withOpacity(0.1),
-                   child: Row(
-                     children: [
-                       const Icon(Icons.wifi_off_rounded, size: 16, color: Colors.redAccent),
-                       const SizedBox(width: 8),
-                       Text(
-                         "Koneksi realtime terputus",
-                         style: TextStyle(color: Colors.redAccent.shade700, fontSize: 12, fontWeight: FontWeight.w600),
-                       ),
-                     ],
-                   ),
-                 ),
-                 Expanded(child: _buildBodyContent(provider.cachedNotifications, isDark, snapshot.connectionState)),
-               ],
-             );
-          }
-
-          final notifications = snapshot.data ?? provider.cachedNotifications;
-          return _buildBodyContent(notifications, isDark, snapshot.connectionState);
-        },
+                final notifications =
+                    snapshot.data ?? provider.cachedNotifications;
+                return _buildBodyContent(
+                  notifications,
+                  isDark,
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildBodyContent(List<NotificationModel> notifications, bool isDark, ConnectionState connectionState) {
+  Widget _buildBodyContent(List<NotificationModel> notifications, bool isDark) {
+    // Apply client-side filter
+    final filtered = notifications.where((n) {
+      if (_filter == 'Unread') return !n.isRead;
+      if (_filter == 'Read') return n.isRead;
+      return true;
+    }).toList();
+
     /// empty state
-    if (notifications.isEmpty && connectionState != ConnectionState.active) {
+    if (filtered.isEmpty) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E2438)
-                      : const Color(0xFFEFF6FF),
-                  shape: BoxShape.circle,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/empty_notification.png',
+                  width: 180,
+                  height: 180,
+                  fit: BoxFit.contain,
                 ),
-                child: const Icon(
-                  Icons.notifications_off_outlined,
-                  size: 32,
-                  color: Color(0xFF2563EB),
+                const SizedBox(height: 20),
+                Text(
+                  'Belum Ada Notifikasi',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Belum ada notifikasi',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF111827),
+                const SizedBox(height: 8),
+                Text(
+                  'Notifikasi baru akan muncul di sini.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'You have no notifications at the moment.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color:
-                      isDark ? Colors.white38 : const Color(0xFF9CA3AF),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -210,40 +269,65 @@ class _NotificationScreenState extends State<NotificationScreen> {
       children: [
         /// ── Count bar ──────────────────────────────────────────────
         Container(
-          color: isDark ? const Color(0xFF161B2E) : Colors.white,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Row(
             children: [
               Text(
-                '${notifications.length} notification${notifications.length > 1 ? 's' : ''}',
-                style: TextStyle(
+                '${filtered.length} notifikasi${_filter == 'Unread' ? ' belum dibaca' : _filter == 'Read' ? ' dibaca' : ''}',
+                style: GoogleFonts.outfit(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? Colors.white60
-                      : const Color(0xFF6B7280),
+                  color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                 ),
               ),
             ],
           ),
         ),
-        Divider(
-          height: 1,
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : const Color(0xFFE5E7EB),
-        ),
 
         /// ── List ───────────────────────────────────────────────────
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            itemCount: notifications.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            itemCount: filtered.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              final notif = notifications[index];
-              return NotificationTile(notification: notif);
+              final notif = filtered[index];
+              return Dismissible(
+                key: Key(notif.id),
+                direction: DismissDirection.endToStart,
+                onDismissed: (direction) {
+                  context
+                      .read<NotificationProvider>()
+                      .deleteNotification(notif.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Notifikasi berhasil dihapus',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                child: NotificationTile(notification: notif),
+              );
             },
           ),
         ),

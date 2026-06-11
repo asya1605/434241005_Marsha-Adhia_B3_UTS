@@ -30,18 +30,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    // Reset password
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Password berhasil direset.\nGunakan password default: 123456",
+    setState(() => isLoading = true);
+
+    try {
+      await context.read<AuthProvider>().resetPassword(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Link reset password telah dikirim ke email Anda.",
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 4),
           ),
-          backgroundColor: Colors.blue,
-          duration: Duration(seconds: 4),
-        ),
-      );
-      Navigator.pop(context);
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Gagal mengirim email reset: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 

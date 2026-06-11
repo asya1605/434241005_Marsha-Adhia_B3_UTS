@@ -66,10 +66,12 @@ class LoginScreen extends StatelessWidget {
                                 color: Colors.white.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(
-                                Icons.headset_mic_rounded,
-                                color: Colors.white,
-                                size: 22,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.asset(
+                                  'assets/images/logo.png',
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),

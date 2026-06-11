@@ -101,13 +101,23 @@ class AuthProvider extends ChangeNotifier {
 
   /// AUTO LOGIN
   Future<void> checkLoginStatus() async {
+    final session = Supabase.instance.client.auth.currentSession;
     final prefs = await SharedPreferences.getInstance();
 
-    isLoggedIn = prefs.getBool("isLoggedIn") ?? false;
-    role = prefs.getString("role");
-    email = prefs.getString("email");
-    name = prefs.getString("name");
-    userId = prefs.getString("userId");
+    if (session != null) {
+      isLoggedIn = true;
+      userId = session.user.id;
+      email = session.user.email;
+      role = prefs.getString("role");
+      name = prefs.getString("name");
+    } else {
+      await prefs.clear();
+      isLoggedIn = false;
+      userId = null;
+      email = null;
+      role = null;
+      name = null;
+    }
 
     notifyListeners();
   }

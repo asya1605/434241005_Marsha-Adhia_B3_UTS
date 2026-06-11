@@ -111,7 +111,7 @@ class TicketRepository {
   }
 
   ///  ASSIGN TICKET
-  Future<void> assignTicket(String ticketId, String helpdeskId) async {
+  Future<void> assignTicket(String ticketId, String? helpdeskId) async {
     await _supabase
         .from('tickets')
         .update({'assigned_to': helpdeskId})
@@ -124,5 +124,20 @@ class TicketRepository {
         .from('tickets')
         .update({'status': status})
         .eq('id', ticketId);
+  }
+
+  /// GET TICKET BY ID
+  Future<TicketModel?> getTicketById(String ticketId) async {
+    try {
+      final response = await _supabase
+          .from('tickets')
+          .select('*, helpdesk:user_profiles(name)')
+          .eq('id', ticketId)
+          .maybeSingle();
+      if (response == null) return null;
+      return TicketModel.fromJson(response);
+    } catch (e) {
+      return null;
+    }
   }
 }
