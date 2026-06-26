@@ -14,6 +14,7 @@ class TicketHistoryProvider extends ChangeNotifier {
 
     try {
       history = await _repository.getHistoryByTicket(ticketId);
+      debugPrint("=== AUDIT LOG: Provider history length after loading: ${history.length} ===");
     } catch (e) {
       debugPrint("Error loading history: $e");
     } finally {
@@ -42,6 +43,7 @@ class TicketHistoryProvider extends ChangeNotifier {
       );
       await _repository.insertHistory(item);
       history = await _repository.getHistoryByTicket(ticketId);
+      debugPrint("=== AUDIT LOG: Provider history length after addHistory: ${history.length} ===");
     } catch (e) {
       debugPrint("Error adding history: $e");
     } finally {
@@ -51,6 +53,7 @@ class TicketHistoryProvider extends ChangeNotifier {
   }
 
   void clear() {
+    debugPrint("=== AUDIT LOG: TicketHistoryProvider.clear() called. Previous history length: ${history.length} ===");
     history = [];
     isLoading = false;
     notifyListeners();

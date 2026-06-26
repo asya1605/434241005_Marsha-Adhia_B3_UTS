@@ -6,6 +6,7 @@ import '../providers/ticket_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 import '../../../../navigation/navigation_notifications.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class CreateTicketScreen extends StatefulWidget {
   final String? initialCategory;
@@ -515,6 +516,12 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
                   try {
                     final ticketProvider = context.read<TicketProvider>();
+                    final authProvider = context.read<AuthProvider>();
+                    final uId = authProvider.userId;
+                    if (uId == null || uId.trim().isEmpty) {
+                      throw Exception("User ID tidak valid atau session telah kedaluwarsa. Silakan login kembali.");
+                    }
+
                     String? imageUrl;
                     if (selectedImageBytes != null) {
                       imageUrl = await ticketProvider
@@ -526,8 +533,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       title: title,
                       description: desc,
                       status: "Open",
-                      userId:
-                          Supabase.instance.client.auth.currentUser?.id ?? '',
+                      userId: uId,
                       category: selectedCategory!,
                       priority: selectedPriority!,
                       assignedTo: null,

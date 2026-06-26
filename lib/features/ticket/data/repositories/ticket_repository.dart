@@ -35,7 +35,12 @@ class TicketRepository {
     if (listResponse.isEmpty) return [];
 
     // Fetch creator names map
-    final creatorIds = listResponse.map((e) => e['user_id']?.toString()).whereType<String>().toSet().toList();
+    final creatorIds = listResponse
+        .map((e) => e['user_id']?.toString())
+        .whereType<String>()
+        .where((id) => id.trim().isNotEmpty)
+        .toSet()
+        .toList();
     Map<String, String> userNames = {};
     if (creatorIds.isNotEmpty) {
       try {
@@ -203,6 +208,8 @@ class TicketRepository {
         oldValue: previousAssignedTo,
         newValue: helpdeskId,
       ));
+
+
     } catch (e) {
       rethrow;
     }
@@ -226,6 +233,8 @@ class TicketRepository {
         oldValue: oldStatus,
         newValue: status,
       ));
+
+
 
       if (currentTicket != null) {
         try {

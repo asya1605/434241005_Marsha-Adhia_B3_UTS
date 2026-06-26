@@ -27,6 +27,7 @@ class TicketDetailScreen extends StatefulWidget {
 class _TicketDetailScreenState extends State<TicketDetailScreen> {
   final TextEditingController commentController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late final TicketHistoryProvider _ticketHistoryProvider;
 
   String selectedStatus = "Open";
   String? selectedHelpdeskId;
@@ -52,6 +53,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _ticketHistoryProvider = context.read<TicketHistoryProvider>();
     selectedStatus = widget.ticket.status;
     selectedHelpdeskId = widget.ticket.assignedTo;
     selectedHelpdeskName = widget.ticket.assignedName;
@@ -66,7 +68,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     // Load ticket history
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<TicketHistoryProvider>().loadHistory(widget.ticket.id);
+        _ticketHistoryProvider.loadHistory(widget.ticket.id);
       }
     });
   }
@@ -75,11 +77,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   void dispose() {
     commentController.dispose();
     _scrollController.dispose();
-    try {
-      Provider.of<TicketHistoryProvider>(context, listen: false).clear();
-    } catch (e) {
-      debugPrint("Error clearing ticket history on dispose: $e");
-    }
+    _ticketHistoryProvider.clear();
     super.dispose();
   }
 
@@ -225,7 +223,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       }
 
       if (mounted) {
-        await context.read<TicketHistoryProvider>().loadHistory(widget.ticket.id);
+        await _ticketHistoryProvider.loadHistory(widget.ticket.id);
       }
 
       if (mounted) {
@@ -262,7 +260,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   // Fetch profiles dynamically for commenter user_ids to display real names and emails
   Future<void> _fetchCommenterProfiles(List<Comment> comments) async {
-    final userIds = comments.map((c) => c.userId).toSet().toList();
+    final userIds = comments
+        .map((c) => c.userId)
+        .where((id) => id.trim().isNotEmpty)
+        .toSet()
+        .toList();
     if (userIds.isEmpty) return;
 
     final missingIds = userIds.where((id) => !_commenterNames.containsKey(id)).toList();
@@ -1309,6 +1311,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     TicketHistoryProvider historyProvider,
     bool isDark,
   ) {
+    debugPrint("=== AUDIT LOG: Provider history length before UI build: ${historyProvider.history.length} (isLoading: ${historyProvider.isLoading}) ===");
     final events = _getTimelineEvents(historyProvider.history);
     final totalActivity = events.length;
 
@@ -1582,49 +1585,81 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   List<_TimelineEvent> _getTimelineEvents(List<TicketHistoryModel> history) {
+    final List<_TimelineEvent> events = [];
+
+    if (history.isEmpty) {
+      // Fallback: Tampilkan hanya event "Ticket dibuat" jika riwayat database kosong
+      events.add(_TimelineEvent(
+        title: 'Ticket dibuat',
+        description: 'Status: Open',
+        timestamp: widget.ticket.createdAt,
+        icon: Icons.add_circle_outline_rounded,
+        color: AppColors.statusOpen,
+      ));
+    } else {
+      for (var item in history) {
+        String title = '';
+        IconData icon = Icons.info_outline;
+        Color color = Colors.grey;
+
+        if (item.action == 'CREATED') {
+          title = 'Ticket dibuat';
+          icon = Icons.add_circle_outline_rounded;
+          color = AppColors.statusOpen;
+        } else if (item.action == 'ASSIGNED') {
+          title = 'Ticket ditugaskan';
+          icon = Icons.person_add_alt_1_rounded;
+          color = AppColors.blue;
+        } else if (item.action == 'STATUS_CHANGED') {
+          title = 'Status berubah';
+          icon = Icons.sync_rounded;
+          color = AppColors.statusProcess;
+        } else {
+          title = item.action;
+        }
+
+        String description = '';
+        if (item.action == 'STATUS_CHANGED') {
+          description = 'Status: ${item.oldValue ?? "-"} → ${item.newValue ?? "-"}';
+        } else if (item.action == 'ASSIGNED') {
+          final agentId = item.newValue;
+          String agentName = 'None';
+          if (agentId != null) {
+            final agent = helpdeskList.firstWhere(
+              (h) => h['id'] == agentId,
+              orElse: () => <String, dynamic>{},
+            );
+            if (agent.isNotEmpty) {
+              agentName = agent['name'] ?? 'None';
+            } else {
+              // Fallback jika tidak ada di list lokal, coba samakan dengan model tiket
+              if (widget.ticket.assignedTo == agentId) {
+                agentName = selectedHelpdeskName ?? 'None';
+              } else {
+                agentName = agentId;
+              }
+            }
+          }
+          description = 'Ditugaskan ke: $agentName';
+        } else if (item.action == 'CREATED') {
+          description = 'Status: ${item.newValue ?? "Open"}';
+        }
+
+        events.add(_TimelineEvent(
+          title: title,
+          description: description,
+          timestamp: item.createdAt,
+          icon: icon,
+          color: color,
+        ));
+      }
+    }
+
     // Sort newest first
-    final List<TicketHistoryModel> sortedHistory = List<TicketHistoryModel>.from(history)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-    return sortedHistory.map((item) {
-      String title = '';
-      IconData icon = Icons.info_outline;
-      Color color = Colors.grey;
-
-      if (item.action == 'CREATED') {
-        title = 'Ticket dibuat';
-        icon = Icons.add_circle_outline_rounded;
-        color = AppColors.statusOpen;
-      } else if (item.action == 'ASSIGNED') {
-        title = 'Ticket ditugaskan';
-        icon = Icons.person_add_alt_1_rounded;
-        color = AppColors.blue;
-      } else if (item.action == 'STATUS_CHANGED') {
-        title = 'Status berubah';
-        icon = Icons.sync_rounded;
-        color = AppColors.statusProcess;
-      } else {
-        title = item.action;
-      }
-
-      String description = '';
-      if (item.action == 'STATUS_CHANGED') {
-        description = 'Status: ${item.oldValue ?? "-"} → ${item.newValue ?? "-"}';
-      } else if (item.action == 'ASSIGNED') {
-        description = 'Ditugaskan ke: ${item.newValue ?? "None"}';
-      } else if (item.action == 'CREATED') {
-        description = 'Status: ${item.newValue ?? "Open"}';
-      }
-
-      return _TimelineEvent(
-        title: title,
-        description: description,
-        timestamp: item.createdAt,
-        icon: icon,
-        color: color,
-      );
-    }).toList();
+    events.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return events;
   }
+
 
   Widget _buildDiscussionFeed(CommentProvider commentProvider, bool isDark) {
     if (commentProvider.isLoading) {
