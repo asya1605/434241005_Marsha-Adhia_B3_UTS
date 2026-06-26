@@ -71,7 +71,7 @@ class _NotificationTileState extends State<NotificationTile> {
     }
   }
 
-  Future<void> _handleTap(BuildContext context) async {
+  Future<void> _handleTap() async {
     // 1. Mark as read immediately if unread
     if (!widget.notification.isRead) {
       context.read<NotificationProvider>().markAsRead(widget.notification.id);
@@ -143,7 +143,7 @@ class _NotificationTileState extends State<NotificationTile> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: _isLoading ? null : () => _handleTap(context),
+        onTap: _isLoading ? null : _handleTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(

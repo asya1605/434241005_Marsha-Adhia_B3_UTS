@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/dashboard_widgets.dart';
+import '../widgets/dashboard_shimmer.dart';
+import '../widgets/app_design_tokens.dart';
 import '../../../ticket/data/models/ticket_model.dart';
 import '../../../ticket/presentation/providers/ticket_provider.dart';
-import '../../../ticket/presentation/pages/ticket_list_screen.dart';
+import '../../../ticket/presentation/pages/my_tickets_page.dart';
 import '../../../ticket/presentation/pages/ticket_detail_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../notification/presentation/providers/notification_provider.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// helpdesk_dashboard.dart
-// Taruh di: lib/features/dashboard/presentation/pages/helpdesk_dashboard.dart
-// ─────────────────────────────────────────────────────────────────────────────
 
 class HelpdeskDashboard extends StatefulWidget {
   const HelpdeskDashboard({super.key});
@@ -31,6 +28,25 @@ class _HelpdeskDashboardState extends State<HelpdeskDashboard> {
     });
   }
 
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'network':
+        return Icons.wifi;
+      case 'hardware':
+        return Icons.laptop_outlined;
+      case 'software':
+        return Icons.apps;
+      case 'account':
+        return Icons.account_circle_outlined;
+      default:
+        return Icons.more_horiz;
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<TicketProvider>().loadTickets(role: 'helpdesk');
+  }
+
   @override
   Widget build(BuildContext context) {
     final ticketProvider = context.watch<TicketProvider>();
@@ -40,7 +56,7 @@ class _HelpdeskDashboardState extends State<HelpdeskDashboard> {
 
     final name = authProvider.name ?? 'Helpdesk';
     final agentId = authProvider.userId;
-    final currentRole = 'helpdesk';
+    const currentRole = 'helpdesk';
 
     // Filter tickets assigned to current helpdesk agent dynamically
     final myAssignedTickets = ticketProvider.tickets
@@ -48,35 +64,54 @@ class _HelpdeskDashboardState extends State<HelpdeskDashboard> {
         .toList();
 
     final totalAssigned = myAssignedTickets.length;
-    final openTickets = myAssignedTickets.where((t) => t.status == 'Open').length;
-    final pendingTickets = myAssignedTickets.where((t) => t.status == 'Pending').length;
-    final closedTickets = myAssignedTickets.where((t) => t.status == 'Closed').length;
+    final openCount = myAssignedTickets.where((t) => t.statusCategory == 'open').length;
+    final inProgressCount = myAssignedTickets.where((t) => t.statusCategory == 'inProgress').length;
+    final resolvedCount = myAssignedTickets.where((t) => t.statusCategory == 'closed').length;
+    final otherCount = myAssignedTickets.where((t) => t.statusCategory == 'other').length;
+
+    if (otherCount > 0) {
+      debugPrint('Warning: $otherCount tickets with unrecognized status detected.');
+    }
+
+    final stats = [
+      StatItem(label: 'Assigned', value: openCount, icon: Icons.assignment_outlined, iconColor: AppColors.primary),
+      StatItem(label: 'In Progress', value: inProgressCount, icon: Icons.autorenew, iconColor: AppColors.statusWarningText),
+      StatItem(label: 'Resolved Today', value: resolvedCount, icon: Icons.check_circle_outline, iconColor: AppColors.statusClosedText),
+      StatItem(label: 'Total Assigned', value: totalAssigned, icon: Icons.layers_outlined, iconColor: AppColors.primary),
+      if (otherCount > 0)
+        StatItem(label: 'Other', value: otherCount, icon: Icons.help_outline, iconColor: AppColors.textSecondary),
+    ];
+
+    // Pending count = Assigned + In Progress
+    final pendingCount = openCount + inProgressCount;
 
     // Up to 5 assigned tickets
     final recentTickets = myAssignedTickets.length > 5 
         ? myAssignedTickets.sublist(0, 5) 
         : myAssignedTickets;
 
-    // Timeline activities
+    // Get unread notification ticket IDs
+    final unreadTicketIds = notificationProvider.cachedNotifications
+        .where((n) => !n.isRead && n.ticketId != null)
+        .map((n) => n.ticketId)
+        .toSet();
+
+    // Timeline activities (using tickets + notifications mapping locally)
     final activities = getTimelineActivities(
       tickets: ticketProvider.tickets,
       notifications: notificationProvider.cachedNotifications,
     );
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
-      body: ticketProvider.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: DC.purple,
-              ),
-            )
+      backgroundColor: isDark ? const Color(0xFF0F1117) : AppColors.bgPage,
+      body: ticketProvider.isInitialLoading
+          ? const DashboardShimmer(showCreateCta: false)
           : RefreshIndicator(
-              color: DC.purple,
+              color: AppColors.primary,
               onRefresh: _onRefresh,
               child: CustomScrollView(
                 slivers: [
-                  // ── Header gradient ungu ────────────────────────────────────────
+                  // ── Header gradient purple ────────────────────────────────────────
                   SliverToBoxAdapter(
                     child: DashboardHeader(
                       name: name,
@@ -88,49 +123,87 @@ class _HelpdeskDashboardState extends State<HelpdeskDashboard> {
                   ),
 
                   SliverPadding(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        // NOTE: Daily Progress Bar Card is hidden because daily targets are synthetic metrics not stored in DB.
-
-                        // ── 1. My Workload stat grid ──────────────────────────────
-                        const SectionHeader(title: 'My Workload'),
-                        StatCardGrid(
-                          items: [
-                            StatCardData(
-                              label: 'Total Assigned',
-                              value: totalAssigned,
-                              icon: Icons.confirmation_number_outlined,
-                              color: DC.blue,
-                            ),
-                            StatCardData(
-                              label: 'Open',
-                              value: openTickets,
-                              icon: Icons.folder_open_outlined,
-                              color: DC.cyan,
-                            ),
-                            StatCardData(
-                              label: 'Pending',
-                              value: pendingTickets,
-                              icon: Icons.pause_circle_outline,
-                              color: DC.amber,
-                            ),
-                            StatCardData(
-                              label: 'Closed',
-                              value: closedTickets,
-                              icon: Icons.check_circle_outline,
-                              color: DC.green,
-                            ),
-                          ],
+                        // ── 1. Workload Info Banner ────────────────────────────
+                        HeroActionBanner(
+                          title: '$pendingCount tiket menunggu kamu tangani',
+                          subtitle: 'Prioritaskan tiket yang sudah lama menunggu',
+                          ctaLabel: 'Lihat Semua',
+                          backgroundIcon: Icons.support_agent,
+                          onCtaTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MyTicketsPage(),
+                              ),
+                            ).then((_) => _onRefresh());
+                          },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
-                        // ── 1.5. Aktivitas Tim ─────────────────────────────────
+                        // ── 2. Workload statistics ─────────────────────────────
+                        const SectionHeader(title: 'My Workload'),
+                        const SizedBox(height: 4),
+                        StatCardGrid(items: stats),
+                        const SizedBox(height: 14),
+
+                        // ── 3. Assigned Tickets list ───────────────────────────
+                        SectionHeader(
+                          title: 'Assigned Tickets',
+                          linkText: totalAssigned > 5 ? 'Lihat semua' : null,
+                          onLink: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MyTicketsPage(),
+                              ),
+                            ).then((_) => _onRefresh());
+                          },
+                        ),
+                        const SizedBox(height: 4),
+                        if (recentTickets.isEmpty)
+                          const DashboardEmptyState(
+                            icon: Icons.inbox_outlined,
+                            title: 'Belum Ada Tiket',
+                            subtitle: 'Tidak ada tiket yang ditugaskan kepada Anda.',
+                          )
+                        else
+                          ...recentTickets.map(
+                            (t) => TicketBoardingCard(
+                              ticketCode: t.id,
+                              title: t.title,
+                              status: t.status,
+                              categoryIcon: _getCategoryIcon(t.category),
+                              createdAt: t.createdAt,
+                              createdByName: t.creatorName ?? 'User',
+                              hasUnread: unreadTicketIds.contains(t.id),
+                              category: t.category,
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TicketDetailScreen(
+                                      ticket: t,
+                                    ),
+                                  ),
+                                );
+                                if (!context.mounted) return;
+                                context.read<TicketProvider>().loadTickets(
+                                  role: currentRole,
+                                );
+                              },
+                            ),
+                          ),
+                        const SizedBox(height: 14),
+
+                        // ── 4. Activity section ────────────────────────────────
                         const SectionHeader(title: 'Aktivitas Tim'),
+                        const SizedBox(height: 4),
                         if (activities.isEmpty)
                           const DashboardEmptyState(
                             icon: Icons.history_rounded,
-                            imageAsset: 'assets/images/empty_activity.png',
                             title: 'Belum Ada Aktivitas',
                             subtitle: 'Aktivitas tiket akan muncul di sini.',
                           )
@@ -157,57 +230,6 @@ class _HelpdeskDashboardState extends State<HelpdeskDashboard> {
                               },
                             ),
                           ),
-                        const SizedBox(height: 16),
-
-
-                        // NOTE: Synthetic "Segera ditangani" priority ticket list is hidden because priorities are not supported in the database/provider data.
-
-                        // ── 2. Assigned Tickets ───────────────────────────────────
-                        SectionHeader(
-                          title: 'Assigned Tickets ($totalAssigned)',
-                          linkText: totalAssigned > 5 ? 'View All' : null,
-                          onLink: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const TicketListScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        if (recentTickets.isEmpty)
-                          const DashboardEmptyState(
-                            icon: Icons.inbox_outlined,
-                            imageAsset: 'assets/images/empty_ticket.png',
-                            title: 'Belum Ada Tiket',
-                            subtitle: 'Silakan buat tiket baru untuk memulai.',
-                          )
-                        else
-                          ...recentTickets.map(
-                            (t) => TicketRowCard(
-                              title: t.title,
-                              description: t.description,
-                              status: t.status,
-                              creatorEmail: null,
-                              agentEmail: null,
-                              dateStr: '${t.createdAt.day}/${t.createdAt.month}/${t.createdAt.year}',
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => TicketDetailScreen(
-                                      ticket: t,
-                                    ),
-                                  ),
-                                );
-                                if (!context.mounted) return;
-                                context.read<TicketProvider>().loadTickets(
-                                  role: currentRole,
-                                );
-                              },
-                            ),
-                          ),
-
                         const SizedBox(height: 20),
                       ]),
                     ),
@@ -216,10 +238,6 @@ class _HelpdeskDashboardState extends State<HelpdeskDashboard> {
               ),
             ),
     );
-  }
-
-  Future<void> _onRefresh() async {
-    await context.read<TicketProvider>().loadTickets(role: 'helpdesk');
   }
 }
 

@@ -3,12 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/ticket_model.dart';
 import '../providers/ticket_provider.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
+import '../../../../navigation/navigation_notifications.dart';
 
 class CreateTicketScreen extends StatefulWidget {
-  const CreateTicketScreen({super.key});
+  final String? initialCategory;
+  const CreateTicketScreen({super.key, this.initialCategory});
 
   @override
   State<CreateTicketScreen> createState() => _CreateTicketScreenState();
@@ -19,7 +20,26 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
   final descController = TextEditingController();
   bool isLoading = false;
 
+  String? selectedCategory;
+  String? selectedPriority;
+
   Uint8List? selectedImageBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedCategory = widget.initialCategory;
+  }
+
+  void _resetFormFields() {
+    titleController.clear();
+    descController.clear();
+    setState(() {
+      selectedCategory = null;
+      selectedPriority = null;
+      selectedImageBytes = null;
+    });
+  }
 
   Future<void> pickImage() async {
     final result = await FilePicker.platform.pickFiles(
@@ -39,79 +59,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final role = context.watch<AuthProvider>().role ?? "user";
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    /// Hanya USER yang boleh create ticket
-    if (role != "user") {
-      return Scaffold(
-        backgroundColor:
-            isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
-        appBar: AppBar(
-          backgroundColor: isDark ? const Color(0xFF161B2E) : Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: isDark ? Colors.white : const Color(0xFF111827),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'Create Ticket',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF111827),
-            ),
-          ),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1E2438)
-                        : const Color(0xFFFEF2F2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lock_outline_rounded,
-                    size: 32,
-                    color: Color(0xFFEF4444),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Access Restricted',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Only users can create tickets.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
 
     return Scaffold(
       backgroundColor:
@@ -130,13 +78,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Create Ticket',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF111827),
-            letterSpacing: -0.3,
-          ),
+          'Buat Tiket',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -276,6 +219,152 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+
+                  /// CATEGORY field
+                  _FieldLabel(label: 'Category', isDark: isDark),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedCategory,
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white : const Color(0xFF111827),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Select category',
+                      hintStyle: TextStyle(
+                        color: isDark ? Colors.white30 : const Color(0xFFBFC8D7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.only(left: 14, right: 10),
+                        child: Icon(
+                          Icons.category_rounded,
+                          size: 18,
+                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                        ),
+                      ),
+                      prefixIconConstraints:
+                          const BoxConstraints(minWidth: 0, minHeight: 0),
+                      filled: true,
+                      fillColor:
+                          isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF2D3554)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF2D3554)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF3B82F6),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    items: ['General', 'Network', 'Hardware', 'Software', 'Account']
+                        .map((cat) => DropdownMenuItem<String>(
+                              value: cat,
+                              child: Text(cat),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        selectedCategory = val;
+                      });
+                    },
+                    validator: (val) => val == null ? 'Category is required' : null,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  /// PRIORITY field
+                  _FieldLabel(label: 'Priority', isDark: isDark),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedPriority,
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white : const Color(0xFF111827),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Select priority',
+                      hintStyle: TextStyle(
+                        color: isDark ? Colors.white30 : const Color(0xFFBFC8D7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.only(left: 14, right: 10),
+                        child: Icon(
+                          Icons.priority_high_rounded,
+                          size: 18,
+                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                        ),
+                      ),
+                      prefixIconConstraints:
+                          const BoxConstraints(minWidth: 0, minHeight: 0),
+                      filled: true,
+                      fillColor:
+                          isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF2D3554)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF2D3554)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF3B82F6),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    items: ['Low', 'Medium', 'High']
+                        .map((pri) => DropdownMenuItem<String>(
+                              value: pri,
+                              child: Text(pri),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        selectedPriority = val;
+                      });
+                    },
+                    validator: (val) => val == null ? 'Priority is required' : null,
+                  ),
                 ],
               ),
             ),
@@ -410,10 +499,13 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   String desc = descController.text.trim();
 
                   /// VALIDASI
-                  if (title.isEmpty || desc.isEmpty) {
+                  if (title.isEmpty ||
+                      desc.isEmpty ||
+                      selectedCategory == null ||
+                      selectedPriority == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Title and description are required"),
+                        content: Text("All fields are required"),
                       ),
                     );
                     return;
@@ -422,10 +514,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   setState(() => isLoading = true);
 
                   try {
+                    final ticketProvider = context.read<TicketProvider>();
                     String? imageUrl;
                     if (selectedImageBytes != null) {
-                      imageUrl = await context
-                          .read<TicketProvider>()
+                      imageUrl = await ticketProvider
                           .uploadImageBytes(selectedImageBytes!);
                     }
 
@@ -436,23 +528,28 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       status: "Open",
                       userId:
                           Supabase.instance.client.auth.currentUser?.id ?? '',
+                      category: selectedCategory!,
+                      priority: selectedPriority!,
                       assignedTo: null,
                     );
 
-                    await context
-                        .read<TicketProvider>()
-                        .createTicket(ticket, imageUrl: imageUrl);
+                    await ticketProvider.createTicket(ticket, imageUrl: imageUrl);
 
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Ticket saved"),
                         ),
                       );
-                      Navigator.pop(context);
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        const TabSwitchNotification(1).dispatch(context);
+                        _resetFormFields();
+                      }
                     }
                   } catch (e) {
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("Error: $e"),
@@ -461,7 +558,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       );
                     }
                   } finally {
-                    if (mounted) {
+                    if (context.mounted) {
                       setState(() => isLoading = false);
                     }
                   }

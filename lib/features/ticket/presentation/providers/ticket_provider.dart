@@ -9,7 +9,10 @@ class TicketProvider extends ChangeNotifier {
 
   List<TicketModel> tickets = [];
 
-  bool isLoading = false;
+  bool isInitialLoading = false;
+  bool isRefreshing = false;
+
+  bool get isLoading => isInitialLoading || isRefreshing;
 
   /// simpan role terakhir
   String currentRole = "user";
@@ -18,7 +21,11 @@ class TicketProvider extends ChangeNotifier {
   Future<void> loadTickets({String role = "user"}) async {
     currentRole = role;
 
-    isLoading = true;
+    if (tickets.isEmpty) {
+      isInitialLoading = true;
+    } else {
+      isRefreshing = true;
+    }
     notifyListeners();
 
     final allTickets = await _repository.getTickets();
@@ -26,19 +33,26 @@ class TicketProvider extends ChangeNotifier {
     /// belum pakai user_email dinamis dari Supabase
     tickets = allTickets;
 
-    isLoading = false;
+    isInitialLoading = false;
+    isRefreshing = false;
     notifyListeners();
   }
 
   /// CREATE TICKET
   Future<void> createTicket(TicketModel ticket, {String? imageUrl}) async {
-    isLoading = true;
+    if (tickets.isEmpty) {
+      isInitialLoading = true;
+    } else {
+      isRefreshing = true;
+    }
     notifyListeners();
 
     await _repository.createTicket(
       title: ticket.title,
       description: ticket.description,
       userId: ticket.userId,
+      category: ticket.category,
+      priority: ticket.priority,
       imageUrl: imageUrl,
     );
 
@@ -55,7 +69,11 @@ class TicketProvider extends ChangeNotifier {
 
   /// DELETE TICKET
   Future<void> deleteTicket(String id) async {
-    isLoading = true;
+    if (tickets.isEmpty) {
+      isInitialLoading = true;
+    } else {
+      isRefreshing = true;
+    }
     notifyListeners();
 
     await _repository.deleteTicket(id);

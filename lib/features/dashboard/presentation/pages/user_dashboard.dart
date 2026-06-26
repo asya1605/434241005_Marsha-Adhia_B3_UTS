@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/dashboard_widgets.dart';
+import '../widgets/dashboard_shimmer.dart';
+import '../widgets/app_design_tokens.dart';
 import '../../../ticket/data/models/ticket_model.dart';
 import '../../../ticket/presentation/providers/ticket_provider.dart';
 import '../../../ticket/presentation/pages/create_ticket_screen.dart';
-import '../../../ticket/presentation/pages/ticket_list_screen.dart';
+import '../../../ticket/presentation/pages/my_tickets_page.dart';
 import '../../../ticket/presentation/pages/ticket_detail_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../notification/presentation/providers/notification_provider.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// user_dashboard.dart
-// Taruh di: lib/features/dashboard/presentation/pages/user_dashboard.dart
-// ─────────────────────────────────────────────────────────────────────────────
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -32,6 +29,25 @@ class _UserDashboardState extends State<UserDashboard> {
     });
   }
 
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'network':
+        return Icons.wifi;
+      case 'hardware':
+        return Icons.laptop_outlined;
+      case 'software':
+        return Icons.apps;
+      case 'account':
+        return Icons.account_circle_outlined;
+      default:
+        return Icons.more_horiz;
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<TicketProvider>().loadTickets(role: 'user');
+  }
+
   @override
   Widget build(BuildContext context) {
     final ticketProvider = context.watch<TicketProvider>();
@@ -41,13 +57,27 @@ class _UserDashboardState extends State<UserDashboard> {
 
     final name = authProvider.name ?? 'User';
     final myTickets = ticketProvider.tickets;
-    final currentRole = 'user';
+    const currentRole = 'user';
 
-    // Calculate dynamic counts
+    // Calculate dynamic stats using Task 1 extension
     final totalCount = myTickets.length;
-    final openCount = myTickets.where((t) => t.status == 'Open').length;
-    final pendingCount = myTickets.where((t) => t.status == 'Pending').length;
-    final closedCount = myTickets.where((t) => t.status == 'Closed').length;
+    final openCount = myTickets.where((t) => t.statusCategory == 'open').length;
+    final inProgressCount = myTickets.where((t) => t.statusCategory == 'inProgress').length;
+    final closedCount = myTickets.where((t) => t.statusCategory == 'closed').length;
+    final otherCount = myTickets.where((t) => t.statusCategory == 'other').length;
+
+    if (otherCount > 0) {
+      debugPrint('Warning: $otherCount tickets with unrecognized status detected.');
+    }
+
+    final stats = [
+      StatItem(label: 'Total Tickets', value: totalCount, icon: Icons.layers_outlined, iconColor: AppColors.primary),
+      StatItem(label: 'Open', value: openCount, icon: Icons.folder_outlined, iconColor: AppColors.statusWarningText),
+      StatItem(label: 'In Progress', value: inProgressCount, icon: Icons.autorenew, iconColor: AppColors.primary),
+      StatItem(label: 'Closed', value: closedCount, icon: Icons.check_circle_outline, iconColor: AppColors.statusClosedText),
+      if (otherCount > 0)
+        StatItem(label: 'Other', value: otherCount, icon: Icons.help_outline, iconColor: AppColors.textSecondary),
+    ];
 
     // Get ticket IDs with unread notifications
     final unreadTicketIds = notificationProvider.cachedNotifications
@@ -55,29 +85,27 @@ class _UserDashboardState extends State<UserDashboard> {
         .map((n) => n.ticketId)
         .toSet();
 
+    final unreadCount = myTickets.where((t) => unreadTicketIds.contains(t.id)).length;
+
     // Up to 5 recent tickets
     final recentTickets = myTickets.length > 5 ? myTickets.sublist(0, 5) : myTickets;
 
-    // Timeline activities
+    // Timeline activities (semi-dynamic)
     final activities = getTimelineActivities(
       tickets: myTickets,
       notifications: notificationProvider.cachedNotifications,
     );
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
-      body: ticketProvider.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: DC.blue,
-              ),
-            )
+      backgroundColor: isDark ? const Color(0xFF0F1117) : AppColors.bgPage,
+      body: ticketProvider.isInitialLoading
+          ? const DashboardShimmer(showCreateCta: true)
           : RefreshIndicator(
-              color: DC.blue,
+              color: AppColors.primary,
               onRefresh: _onRefresh,
               child: CustomScrollView(
                 slivers: [
-                  // ── Header gradient biru ────────────────────────────────────────
+                  // ── Header gradient sky-blue ──────────────────────────────────────
                   SliverToBoxAdapter(
                     child: DashboardHeader(
                       name: name,
@@ -89,143 +117,100 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
 
                   SliverPadding(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        // ── 1. Create Ticket CTA ──────────────────────────────
-                        _buildCreateTicketCTA(context, isDark),
-                        const SizedBox(height: 16),
-
-                        // ── 2. Update terbaru tiketmu (Unread replies) ──────────
-                        if (myTickets.any((t) => unreadTicketIds.contains(t.id))) ...[
-                          SectionHeader(
-                            title: 'Update terbaru tiketmu (${myTickets.where((t) => unreadTicketIds.contains(t.id)).length})',
-                          ),
-                          ...myTickets
-                              .where((t) => unreadTicketIds.contains(t.id))
-                              .map(
-                                (t) => TicketRowCard(
-                                  title: t.title,
-                                  description: t.description,
-                                  status: t.status,
-                                  hasUnread: true,
-                                  agentEmail: t.assignedName,
-                                  dateStr: '${t.createdAt.day}/${t.createdAt.month}/${t.createdAt.year}',
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => TicketDetailScreen(
-                                          ticket: t,
-                                        ),
-                                      ),
-                                    );
-                                    if (!context.mounted) return;
-                                    context.read<TicketProvider>().loadTickets(
-                                      role: currentRole,
-                                    );
-                                  },
-                                ),
+                        // ── 2. Hero Status Card (Task 4/6) ─────────────────────
+                        HeroActionBanner(
+                          title: 'Butuh bantuan IT?',
+                          subtitle: 'Laporkan masalahmu, tim kami siap membantu',
+                          ctaLabel: '+ Buat Tiket',
+                          backgroundIcon: Icons.help_outline,
+                          progress: totalCount > 0 ? (totalCount - openCount) / totalCount : 0.0,
+                          progressLabel: '$openCount dari $totalCount tiket masih open',
+                          onCtaTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CreateTicketScreen(),
                               ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // ── 3. Overview stat grid ──────────────────────────────
-                        const SectionHeader(title: 'My Tickets Overview'),
-                        StatCardGrid(
-                          items: [
-                            StatCardData(
-                              label: 'Total Tickets',
-                              value: totalCount,
-                              icon: Icons.confirmation_number_outlined,
-                              color: DC.blue,
-                            ),
-                            StatCardData(
-                              label: 'Open',
-                              value: openCount,
-                              icon: Icons.folder_open_outlined,
-                              color: DC.cyan,
-                            ),
-                            StatCardData(
-                              label: 'Pending',
-                              value: pendingCount,
-                              icon: Icons.pause_circle_outline,
-                              color: DC.amber,
-                            ),
-                            StatCardData(
-                              label: 'Closed',
-                              value: closedCount,
-                              icon: Icons.check_circle_outline,
-                              color: DC.green,
-                            ),
-                          ],
+                            ).then((_) => _onRefresh());
+                          },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
 
-                        // ── 3.5. Aktivitas Terbaru ─────────────────────────────
-                        const SectionHeader(title: 'Aktivitas Terbaru'),
-                        if (activities.isEmpty)
-                          const DashboardEmptyState(
-                            icon: Icons.history_rounded,
-                            imageAsset: 'assets/images/empty_activity.png',
-                            title: 'Belum Ada Aktivitas',
-                            subtitle: 'Aktivitas tiket akan muncul di sini.',
-                          )
-                        else
-                          ...activities.map(
-                            (act) => ActivityTimelineCard(
-                              activity: act,
-                              onTap: () async {
-                                final activityTicket = act[ActivityKeys.ticket] as TicketModel?;
-                                if (activityTicket != null) {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => TicketDetailScreen(
-                                        ticket: activityTicket,
-                                      ),
-                                    ),
-                                  );
-                                  if (!context.mounted) return;
-                                  context.read<TicketProvider>().loadTickets(
-                                    role: currentRole,
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        const SizedBox(height: 16),
+                        // ── 3. Update Alert Banner (MOVED UP) ──────────────────
+                        UpdateAlertBanner(
+                          unreadCount: unreadCount,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MyTicketsPage(),
+                              ),
+                            ).then((_) => _onRefresh());
+                          },
+                        ),
+                        if (unreadCount > 0) const SizedBox(height: 12),
 
+                        // ── 4. Kategori Section ────────────────────────────────
+                        const SectionHeader(title: 'Kategori'),
+                        const SizedBox(height: 4),
+                        CategoryGrid(
+                          categories: const [
+                            CategoryItem(label: 'Jaringan', icon: Icons.wifi, value: 'Network'),
+                            CategoryItem(label: 'Hardware', icon: Icons.laptop_outlined, value: 'Hardware'),
+                            CategoryItem(label: 'Software', icon: Icons.apps, value: 'Software'),
+                            CategoryItem(label: 'Lainnya', icon: Icons.more_horiz, value: 'General'),
+                          ],
+                          onCategoryTap: (val) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CreateTicketScreen(initialCategory: val),
+                              ),
+                            ).then((_) => _onRefresh());
+                          },
+                        ),
+                        const SizedBox(height: 14),
 
-                        // ── 4. Recent Tickets ───────────────────────────────────
+                        // ── 5. Overview Grid ──────────────────────────────────
+                        const SectionHeader(title: 'Ringkasan Tiket'),
+                        const SizedBox(height: 4),
+                        StatCardGrid(items: stats),
+                        const SizedBox(height: 14),
+
+                        // ── 6. Recent Tickets List ─────────────────────────────
                         SectionHeader(
-                          title: 'Recent Tickets ($totalCount)',
-                          linkText: totalCount > 5 ? 'View All' : null,
+                          title: 'Tiket Kamu',
+                          linkText: totalCount > 5 ? 'Lihat semua' : null,
                           onLink: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const TicketListScreen(),
+                                builder: (_) => const MyTicketsPage(),
                               ),
-                            );
+                            ).then((_) => _onRefresh());
                           },
                         ),
+                        const SizedBox(height: 4),
                         if (recentTickets.isEmpty)
                           const DashboardEmptyState(
                             icon: Icons.inbox_outlined,
-                            imageAsset: 'assets/images/empty_ticket.png',
                             title: 'Belum Ada Tiket',
                             subtitle: 'Silakan buat tiket baru untuk memulai.',
                           )
                         else
                           ...recentTickets.map(
-                            (t) => TicketRowCard(
+                            (t) => TicketBoardingCard(
+                              ticketCode: t.id,
                               title: t.title,
-                              description: t.description,
                               status: t.status,
+                              categoryIcon: _getCategoryIcon(t.category),
+                              createdAt: t.createdAt,
+                              assignedAgentName: t.assignedName,
                               hasUnread: unreadTicketIds.contains(t.id),
-                              agentEmail: t.assignedName,
-                              dateStr: '${t.createdAt.day}/${t.createdAt.month}/${t.createdAt.year}',
+                              category: t.category,
                               onTap: () async {
                                 await Navigator.push(
                                   context,
@@ -242,7 +227,40 @@ class _UserDashboardState extends State<UserDashboard> {
                               },
                             ),
                           ),
+                        const SizedBox(height: 14),
 
+                        // ── 7. Activity Timeline ───────────────────────────────
+                        const SectionHeader(title: 'Aktivitas Terbaru'),
+                        const SizedBox(height: 4),
+                        if (activities.isEmpty)
+                          const DashboardEmptyState(
+                            icon: Icons.history_rounded,
+                            title: 'Belum Ada Aktivitas',
+                            subtitle: 'Aktivitas tiket akan muncul di sini.',
+                          )
+                        else
+                          ...activities.map(
+                            (act) => ActivityTimelineCard(
+                              activity: act,
+                              onTap: () async {
+                                final activityTicket = act[ActivityKeys.ticket] as TicketModel?;
+                                if (activityTicket != null) {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => TicketDetailScreen(
+                                          ticket: activityTicket,
+                                        ),
+                                      ),
+                                    );
+                                    if (!context.mounted) return;
+                                    context.read<TicketProvider>().loadTickets(
+                                      role: currentRole,
+                                    );
+                                }
+                              },
+                            ),
+                          ),
                         const SizedBox(height: 20),
                       ]),
                     ),
@@ -252,88 +270,4 @@ class _UserDashboardState extends State<UserDashboard> {
             ),
     );
   }
-
-  Widget _buildCreateTicketCTA(BuildContext context, bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const CreateTicketScreen(),
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF2563EB), Color(0xFF60A5FA)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.add_circle_outline_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Create New Ticket',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Report an issue or request support',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.white70,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _onRefresh() async {
-    await context.read<TicketProvider>().loadTickets(role: 'user');
-  }
 }
-

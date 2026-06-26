@@ -8,6 +8,13 @@ class AuthProvider extends ChangeNotifier {
 
   bool isLoading = false;
   bool isLoggedIn = false;
+  bool isRecoveringPassword = false;
+
+  void setRecoveringPassword(bool value) {
+    isRecoveringPassword = value;
+    notifyListeners();
+  }
+  String? loginError;
 
   /// USER DATA
   String? role;
@@ -19,6 +26,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> login(String email, String password) async {
     try {
       isLoading = true;
+      loginError = null;
       notifyListeners();
 
       // Memanggil repository (sekarang return AuthResponse)
@@ -27,21 +35,28 @@ class AuthProvider extends ChangeNotifier {
       final user = res.user;
 
       if (user != null) {
+        /// ROLE & ACTIVE STATUS
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select()
+            .eq('id', user.id)
+            .single();
+
+        final isActive = profile['is_active'] as bool? ?? true;
+        if (!isActive) {
+          // Immediately sign out
+          await Supabase.instance.client.auth.signOut();
+          loginError = "Account has been deactivated. Please contact administrator.";
+          isLoading = false;
+          notifyListeners();
+          return false;
+        }
+
         ///  SIMPAN DATA USER
         this.email = email;
         userId = user.id;
-
-        /// ROLE 
-        if (email == "admin@mail.com") {
-          role = "admin";
-          name = "Admin";
-        } else if (email == "helpdesk@mail.com") {
-          role = "helpdesk";
-          name = "Helpdesk";
-        } else {
-          role = "user";
-          name = "User";
-        }
+        role = (profile['role'] as String?) ?? 'user';
+        name = (profile['display_name'] as String?) ?? (profile['name'] as String?) ?? 'User';
 
         final prefs = await SharedPreferences.getInstance();
 
@@ -58,11 +73,18 @@ class AuthProvider extends ChangeNotifier {
         return true;
       }
 
+      loginError = "Login gagal";
       isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
       isLoading = false;
+      final errorStr = e.toString();
+      if (errorStr.contains("Invalid login credentials")) {
+        loginError = "Email atau password salah";
+      } else {
+        loginError = "Login gagal: ${errorStr.replaceAll('Exception:', '').trim()}";
+      }
       notifyListeners();
       debugPrint("Login error: $e");
       return false;
@@ -99,17 +121,78 @@ class AuthProvider extends ChangeNotifier {
     await _repository.resetPassword(email);
   }
 
+  /// UPDATE PASSWORD
+  Future<String?> updatePassword(String newPassword) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(
+          password: newPassword,
+        ),
+      );
+
+      isRecoveringPassword = false;
+      isLoading = false;
+      notifyListeners();
+      return null;
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
   /// AUTO LOGIN
   Future<void> checkLoginStatus() async {
+    if (isRecoveringPassword) {
+      isLoggedIn = false;
+      notifyListeners();
+      return;
+    }
     final session = Supabase.instance.client.auth.currentSession;
     final prefs = await SharedPreferences.getInstance();
 
     if (session != null) {
-      isLoggedIn = true;
-      userId = session.user.id;
-      email = session.user.email;
-      role = prefs.getString("role");
-      name = prefs.getString("name");
+      try {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select()
+            .eq('id', session.user.id)
+            .single();
+
+        final isActive = profile['is_active'] as bool? ?? true;
+        if (!isActive) {
+          await Supabase.instance.client.auth.signOut();
+          await prefs.clear();
+          isLoggedIn = false;
+          userId = null;
+          email = null;
+          role = null;
+          name = null;
+          notifyListeners();
+          return;
+        }
+
+        isLoggedIn = true;
+        userId = session.user.id;
+        email = session.user.email;
+        role = (profile['role'] as String?) ?? 'user';
+        name = (profile['display_name'] as String?) ?? (profile['name'] as String?) ?? 'User';
+
+        await prefs.setString("role", role!);
+        await prefs.setString("name", name!);
+        await prefs.setString("userId", userId!);
+      } catch (e) {
+        debugPrint("Auto-login error loading profile: $e");
+        // Fallback to local session details if database call fails
+        isLoggedIn = true;
+        userId = session.user.id;
+        email = session.user.email;
+        role = prefs.getString("role") ?? 'user';
+        name = prefs.getString("name") ?? 'User';
+      }
     } else {
       await prefs.clear();
       isLoggedIn = false;
@@ -131,6 +214,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.clear();
 
     isLoggedIn = false;
+    isRecoveringPassword = false;
     role = null;
     email = null;
     name = null;

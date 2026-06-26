@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/auth/presentation/pages/login_screen.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
+import '../features/onboarding/presentation/pages/onboarding_screen.dart';
 import '../navigation/admin_navigation.dart';
 import '../navigation/helpdesk_navigation.dart';
 import '../navigation/user_navigation.dart';
@@ -65,13 +67,42 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
+    if (authProvider.isRecoveringPassword) {
+      return;
+    }
+
     if (!authProvider.isLoggedIn) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => LoginScreen(),
-        ),
-      );
+      final prefs = await SharedPreferences.getInstance();
+      final seen = prefs.getBool('onboarding_seen') ?? false;
+      if (!mounted) return;
+      if (seen) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LoginScreen(),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OnboardingScreen(
+              onFinish: (onboardingContext) async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('onboarding_seen', true);
+                if (onboardingContext.mounted) {
+                  Navigator.pushReplacement(
+                    onboardingContext,
+                    MaterialPageRoute(
+                      builder: (_) => LoginScreen(),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+        );
+      }
     } else {
       /// ROLE NAVIGATION
       final role = authProvider.role;

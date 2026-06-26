@@ -6,8 +6,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/ticket_model.dart';
 import '../../data/models/comment_model.dart';
+import '../../data/models/ticket_history_model.dart';
 import '../../data/repositories/ticket_repository.dart';
 import '../providers/comment_provider.dart';
+import '../providers/ticket_history_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class TicketDetailScreen extends StatefulWidget {
@@ -34,7 +36,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   bool isSaving = false;
   List<Map<String, dynamic>> helpdeskList = [];
 
-  final List<String> statusList = ["Open", "Process", "Done"];
+  final List<String> statusList = ["Open", "Process", "Pending", "Done", "Closed"];
 
   // Local caches to resolve profile details for commenters
   final Map<String, String> _commenterNames = {};
@@ -60,16 +62,30 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     _fetchCreatorName();
     _fetchHelpdeskUsers();
     _fetchAgentEmail();
+
+    // Load ticket history
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TicketHistoryProvider>().loadHistory(widget.ticket.id);
+      }
+    });
   }
 
   @override
   void dispose() {
     commentController.dispose();
     _scrollController.dispose();
+    try {
+      Provider.of<TicketHistoryProvider>(context, listen: false).clear();
+    } catch (e) {
+      debugPrint("Error clearing ticket history on dispose: $e");
+    }
     super.dispose();
   }
 
-  // Stable hashing of the UUID to dynamically compute deterministic category and priority
+
+
+  // Stable hashing of the UUID to dynamically compute deterministic SLA progress
   int _stableHash(String value) {
     int hash = 0;
     for (int i = 0; i < value.length; i++) {
@@ -78,28 +94,24 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     return hash.abs();
   }
 
-  String _getMockCategory(String id) {
-    final categories = ["Hardware", "Software", "Network"];
-    return categories[_stableHash(id) % categories.length];
-  }
-
-  String _getMockPriority(String id) {
-    final priorities = ["Low", "Medium", "High"];
-    return priorities[(_stableHash(id) ~/ 3) % priorities.length];
-  }
-
   // Fetch ticket creator's name and email
   Future<void> _fetchCreatorName() async {
     try {
       final supabase = Supabase.instance.client;
       final response = await supabase
           .from('user_profiles')
-          .select('name')
+          .select('display_name, email')
           .eq('id', widget.ticket.userId)
           .single();
       if (mounted) {
         setState(() {
-          _creatorEmail = response['name']?.toString() ?? 'user@mail.com';
+          final displayName = response['display_name']?.toString();
+          final email = response['email']?.toString();
+          if (displayName != null && email != null) {
+            _creatorEmail = "$displayName ($email)";
+          } else {
+            _creatorEmail = displayName ?? email ?? 'user@mail.com';
+          }
         });
       }
     } catch (e) {
@@ -125,12 +137,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       final supabase = Supabase.instance.client;
       final response = await supabase
           .from('user_profiles')
-          .select('name')
+          .select('display_name, email')
           .eq('id', selectedHelpdeskId!)
           .single();
       if (mounted) {
         setState(() {
-          _agentEmail = response['name']?.toString() ?? 'helpdesk@mail.com';
+          final displayName = response['display_name']?.toString();
+          final email = response['email']?.toString();
+          if (displayName != null && email != null) {
+            _agentEmail = "$displayName ($email)";
+          } else {
+            _agentEmail = displayName ?? email ?? 'helpdesk@mail.com';
+          }
         });
       }
     } catch (_) {
@@ -207,6 +225,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       }
 
       if (mounted) {
+        await context.read<TicketHistoryProvider>().loadHistory(widget.ticket.id);
+      }
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -250,17 +272,17 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       final supabase = Supabase.instance.client;
       final response = await supabase
           .from('user_profiles')
-          .select('id, name, role')
+          .select('id, display_name, email, role')
           .inFilter('id', missingIds);
 
       if (mounted) {
         setState(() {
           for (var row in response) {
             final id = row['id']?.toString() ?? '';
-            final name = row['name']?.toString() ?? 'User';
+            final displayName = row['display_name']?.toString() ?? 'User';
+            final email = row['email']?.toString() ?? displayName;
             final role = row['role']?.toString() ?? 'user';
-            final email = name; // Under our DB schema, name column contains the email address.
-            _commenterNames[id] = name;
+            _commenterNames[id] = displayName;
             _commenterRoles[id] = role;
             _commenterEmails[id] = email;
           }
@@ -276,6 +298,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     final authProvider = context.watch<AuthProvider>();
     final role = authProvider.role ?? "user";
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final historyProvider = context.watch<TicketHistoryProvider>();
 
     return ChangeNotifierProvider(
       create: (_) => CommentProvider()..loadComments(widget.ticket.id),
@@ -290,11 +313,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
             appBar: AppBar(
               title: Text(
-                'Ticket Details',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+                'Detail Tiket',
+                style: Theme.of(context).appBarTheme.titleTextStyle,
               ),
             ),
             body: SafeArea(
@@ -323,7 +343,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           const SizedBox(height: 16),
 
                           /// 4. Aktivitas
-                          _buildAktivitasCard(commentProvider, isDark),
+                          _buildAktivitasCard(commentProvider, historyProvider, isDark),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -341,17 +361,178 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
   }
 
+  int _getStepIndex(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return 0;
+      case 'process':
+        return 1;
+      case 'pending':
+        return 2;
+      case 'done':
+        return 3;
+      case 'closed':
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'done':
+      case 'closed':
+        return AppColors.statusClosed;
+      case 'process':
+        return AppColors.statusProcess;
+      case 'pending':
+        return AppColors.statusPending;
+      case 'open':
+      default:
+        return AppColors.statusOpen;
+    }
+  }
+
   double _getSlaProgress(String status) {
-    if (status.toLowerCase() == 'done') return 1.0;
+    if (status.toLowerCase() == 'done' || status.toLowerCase() == 'closed') return 1.0;
     final baseProgress = ((_stableHash(widget.ticket.id) % 30) + 45) / 100.0;
     return baseProgress;
   }
 
   Color _getSlaColor(double progress, String status) {
-    if (status.toLowerCase() == 'done') return AppColors.statusClosed;
+    if (status.toLowerCase() == 'done' || status.toLowerCase() == 'closed') return AppColors.statusClosed;
     if (progress > 0.8) return AppColors.priorityHigh;
     if (progress > 0.6) return AppColors.statusProcess;
     return AppColors.blue;
+  }
+
+  Widget _buildStatusStepper(bool isDark) {
+    final steps = ["Open", "Process", "Pending", "Done", "Closed"];
+    final currentIdx = _getStepIndex(selectedStatus);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surface2Dark : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "STATUS TRACKING",
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? const Color(0xFF64748B) : AppColors.textHint,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Text(
+                selectedStatus.toUpperCase(),
+                style: GoogleFonts.outfit(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  color: _getStatusColor(selectedStatus),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: List.generate(steps.length, (index) {
+              final stepName = steps[index];
+              final isCompleted = index < currentIdx;
+              final isActive = index == currentIdx;
+              
+              Color stepColor;
+              if (isActive) {
+                stepColor = _getStatusColor(stepName);
+              } else if (isCompleted) {
+                stepColor = AppColors.blue;
+              } else {
+                stepColor = isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1);
+              }
+
+              return Expanded(
+                child: Row(
+                  children: [
+                    // Node
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? stepColor.withOpacity(0.15)
+                                  : (isCompleted ? stepColor : Colors.transparent),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: stepColor,
+                                width: isActive ? 2 : 1.5,
+                              ),
+                            ),
+                            child: Center(
+                              child: isCompleted
+                                  ? const Icon(Icons.check, size: 11, color: Colors.white)
+                                  : Text(
+                                      "${index + 1}",
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: isActive
+                                            ? stepColor
+                                            : (isDark ? const Color(0xFF64748B) : AppColors.textHint),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            stepName,
+                            style: GoogleFonts.outfit(
+                              fontSize: 9,
+                              fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+                              color: isActive
+                                  ? stepColor
+                                  : (isCompleted
+                                      ? (isDark ? Colors.white70 : AppColors.textPrimary)
+                                      : (isDark ? const Color(0xFF64748B) : AppColors.textHint)),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Connector
+                    if (index < steps.length - 1)
+                      Container(
+                        width: 14,
+                        height: 2,
+                        margin: const EdgeInsets.only(bottom: 15), // Align with center of circle
+                        color: index < currentIdx
+                            ? AppColors.blue
+                            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatDateIndo(DateTime date) {
@@ -395,30 +576,23 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   Widget _buildStatusBadge(String status) {
     IconData icon;
-    Color color;
-    Color bgColor;
+    Color color = _getStatusColor(status);
+    Color bgColor = color.withOpacity(0.1);
 
     switch (status.toLowerCase()) {
       case 'done':
+      case 'closed':
         icon = Icons.check_rounded;
-        color = AppColors.statusClosed;
-        bgColor = AppColors.statusClosed.withOpacity(0.1);
         break;
       case 'process':
         icon = Icons.sync_rounded;
-        color = AppColors.statusProcess;
-        bgColor = AppColors.statusProcess.withOpacity(0.1);
         break;
       case 'pending':
         icon = Icons.pause_circle_outline_rounded;
-        color = AppColors.statusPending;
-        bgColor = AppColors.statusPending.withOpacity(0.1);
         break;
       case 'open':
       default:
         icon = Icons.fiber_new_rounded;
-        color = AppColors.statusOpen;
-        bgColor = AppColors.statusOpen.withOpacity(0.1);
         break;
     }
 
@@ -472,8 +646,14 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         icon = Icons.code_rounded;
         break;
       case 'network':
-      default:
         icon = Icons.wifi_rounded;
+        break;
+      case 'account':
+        icon = Icons.person_outline_rounded;
+        break;
+      case 'general':
+      default:
+        icon = Icons.info_outline_rounded;
         break;
     }
 
@@ -486,8 +666,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   Widget _buildHeaderCard(bool isDark) {
-    final category = _getMockCategory(widget.ticket.id);
-    final priority = _getMockPriority(widget.ticket.id);
+    final category = widget.ticket.category.isEmpty ? 'General' : widget.ticket.category;
+    final priority = widget.ticket.priority.isEmpty ? 'Medium' : widget.ticket.priority;
     final shortId = widget.ticket.id.length > 5 
         ? widget.ticket.id.substring(0, 5).toUpperCase() 
         : widget.ticket.id.toUpperCase();
@@ -547,7 +727,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          _buildStatusStepper(isDark),
+          const SizedBox(height: 16),
 
           // Grid informasi 2 kolom
           Table(
@@ -1122,8 +1304,12 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
   }
 
-  Widget _buildAktivitasCard(CommentProvider commentProvider, bool isDark) {
-    final events = _getTimelineEvents(commentProvider.comments);
+  Widget _buildAktivitasCard(
+    CommentProvider commentProvider,
+    TicketHistoryProvider historyProvider,
+    bool isDark,
+  ) {
+    final events = _getTimelineEvents(historyProvider.history);
     final totalActivity = events.length;
 
     return Container(
@@ -1191,7 +1377,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
           // Content based on tab
           _activeTab == 0
-              ? _buildTimelineFeed(events, isDark)
+              ? _buildTimelineFeed(events, isDark, historyProvider.isLoading)
               : _buildDiscussionFeed(commentProvider, isDark),
         ],
       ),
@@ -1230,7 +1416,31 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
   }
 
-  Widget _buildTimelineFeed(List<_TimelineEvent> events, bool isDark) {
+  Widget _buildTimelineFeed(List<_TimelineEvent> events, bool isDark, bool isLoading) {
+    if (isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (events.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Text(
+            "Belum ada riwayat aktivitas",
+            style: GoogleFonts.outfit(
+              fontSize: 13,
+              color: isDark ? const Color(0xFF64748B) : AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
     final visibleEvents = _isTimelineExpanded || events.length <= 2
         ? events
         : events.sublist(0, 2);
@@ -1297,22 +1507,37 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                                   fontWeight: FontWeight.w700,
                                   color: isDark ? Colors.white : AppColors.textPrimary),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              event.description,
-                              style: GoogleFonts.outfit(
-                                fontSize: 11.5,
-                                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                            if (event.description.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                event.description,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11.5,
+                                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                                ),
                               ),
-                            ),
+                            ],
                             const SizedBox(height: 6),
-                            Text(
-                              _formatTimelineTime(event.timestamp),
-                              style: GoogleFonts.outfit(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w500,
-                                color: isDark ? Colors.white30 : AppColors.textHint,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  _formatTanggal(event.timestamp),
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? Colors.white30 : AppColors.textHint,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatJam(event.timestamp),
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? Colors.white30 : AppColors.textHint,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1356,76 +1581,49 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
   }
 
-  List<_TimelineEvent> _getTimelineEvents(List<Comment> comments) {
-    final List<_TimelineEvent> events = [];
+  List<_TimelineEvent> _getTimelineEvents(List<TicketHistoryModel> history) {
+    // Sort newest first
+    final List<TicketHistoryModel> sortedHistory = List<TicketHistoryModel>.from(history)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    // 1. Ticket Submission Event
-    events.add(_TimelineEvent(
-      title: "Tiket dibuat",
-      description: "Dikirim oleh $_creatorEmail",
-      timestamp: widget.ticket.createdAt,
-      icon: Icons.add_circle_outline_rounded,
-      color: AppColors.statusOpen,
-    ));
+    return sortedHistory.map((item) {
+      String title = '';
+      IconData icon = Icons.info_outline;
+      Color color = Colors.grey;
 
-    // 2. Ticket Assignment Event
-    if (selectedHelpdeskName != null) {
-      events.add(_TimelineEvent(
-        title: "Agen di-assign",
-        description: "$_agentEmail ditugaskan",
-        timestamp: widget.ticket.createdAt.add(const Duration(seconds: 1)),
-        icon: Icons.person_add_alt_1_rounded,
-        color: AppColors.blue,
-      ));
-    }
-
-    for (var comment in comments) {
-      final role = comment.role.toLowerCase();
-      final email = _commenterEmails[comment.userId] ?? 
-          (role == 'admin' ? 'admin@mail.com' : role == 'helpdesk' ? 'helpdesk@mail.com' : 'user@mail.com');
-
-      String title = "User membalas";
-      if (role == 'admin') {
-        title = "Admin membalas";
-      } else if (role == 'helpdesk') {
-        title = "Agen membalas";
+      if (item.action == 'CREATED') {
+        title = 'Ticket dibuat';
+        icon = Icons.add_circle_outline_rounded;
+        color = AppColors.statusOpen;
+      } else if (item.action == 'ASSIGNED') {
+        title = 'Ticket ditugaskan';
+        icon = Icons.person_add_alt_1_rounded;
+        color = AppColors.blue;
+      } else if (item.action == 'STATUS_CHANGED') {
+        title = 'Status berubah';
+        icon = Icons.sync_rounded;
+        color = AppColors.statusProcess;
+      } else {
+        title = item.action;
       }
 
-      events.add(_TimelineEvent(
+      String description = '';
+      if (item.action == 'STATUS_CHANGED') {
+        description = 'Status: ${item.oldValue ?? "-"} → ${item.newValue ?? "-"}';
+      } else if (item.action == 'ASSIGNED') {
+        description = 'Ditugaskan ke: ${item.newValue ?? "None"}';
+      } else if (item.action == 'CREATED') {
+        description = 'Status: ${item.newValue ?? "Open"}';
+      }
+
+      return _TimelineEvent(
         title: title,
-        description: email,
-        timestamp: comment.createdAt,
-        icon: Icons.chat_bubble_outline_rounded,
-        color: role == 'admin' 
-            ? AppColors.priorityHigh 
-            : role == 'helpdesk' 
-                ? AppColors.statusPending 
-                : AppColors.blueLight,
-      ));
-    }
-
-    // 4. Status updates events (derived based on current values)
-    if (selectedStatus == "Process") {
-      events.add(_TimelineEvent(
-        title: "Status diubah ke Process",
-        description: "Status diubah ke Process",
-        timestamp: comments.isNotEmpty ? comments.first.createdAt.add(const Duration(minutes: 5)) : DateTime.now(),
-        icon: Icons.sync_rounded,
-        color: AppColors.statusProcess,
-      ));
-    } else if (selectedStatus == "Done" || selectedStatus == "Closed") {
-      events.add(_TimelineEvent(
-        title: "Tiket diselesaikan",
-        description: "Status diubah ke Done",
-        timestamp: comments.isNotEmpty ? comments.last.createdAt.add(const Duration(minutes: 10)) : DateTime.now(),
-        icon: Icons.check_circle_outline_rounded,
-        color: AppColors.statusClosed,
-      ));
-    }
-
-    // Sort chronologically (oldest to newest)
-    events.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    return events;
+        description: description,
+        timestamp: item.createdAt,
+        icon: icon,
+        color: color,
+      );
+    }).toList();
   }
 
   Widget _buildDiscussionFeed(CommentProvider commentProvider, bool isDark) {
@@ -1489,8 +1687,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         final isCurrentUser = comment.userId == currentUserId;
         final senderName = _commenterNames[comment.userId] ?? "User";
         final senderRole = _commenterRoles[comment.userId] ?? comment.role;
-        final senderEmail = _commenterEmails[comment.userId] ?? 
-            (senderRole == 'admin' ? 'admin@mail.com' : senderRole == 'helpdesk' ? 'helpdesk@mail.com' : 'user@mail.com');
+        final senderEmail = _commenterEmails[comment.userId] ?? senderName;
 
         return _buildChatBubble(comment, isCurrentUser, senderName, senderRole, senderEmail, isDark);
       },
@@ -1672,6 +1869,21 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         ),
       ),
     );
+  }
+
+  String _formatTanggal(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    final monthStr = months[date.month - 1];
+    return '${date.day} $monthStr ${date.year}';
+  }
+
+  String _formatJam(DateTime date) {
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 
   String _formatTimelineTime(DateTime date) {

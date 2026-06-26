@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../ticket/presentation/providers/ticket_provider.dart';
-import '../../../ticket/presentation/pages/ticket_list_screen.dart';
+import '../../../ticket/presentation/pages/my_tickets_page.dart';
 import '../../../ticket/presentation/pages/create_ticket_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -171,7 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const TicketListScreen(),
+                                    builder: (_) => const MyTicketsPage(),
                                   ),
                                 );
                               },

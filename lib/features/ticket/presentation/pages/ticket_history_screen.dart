@@ -18,6 +18,7 @@ class _TicketHistoryScreenState extends State<TicketHistoryScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       final role = context.read<AuthProvider>().role ?? "user";
       context.read<TicketProvider>().loadTickets(role: role);
     });
@@ -53,12 +54,7 @@ class _TicketHistoryScreenState extends State<TicketHistoryScreen> {
         ),
         title: Text(
           'Riwayat Tiket',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF111827),
-            letterSpacing: -0.3,
-          ),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

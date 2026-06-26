@@ -1,45 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:helpdesk_ticket/features/ticket/data/models/ticket_model.dart';
-import 'package:helpdesk_ticket/features/notification/data/models/notification_model.dart';
+import 'app_design_tokens.dart';
+import '../../../ticket/data/models/ticket_model.dart';
+import '../../../notification/data/models/notification_model.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// dashboard_widgets.dart
-// Widget bersama yang dipakai oleh admin, user, dan helpdesk dashboard.
-// Taruh di: lib/features/dashboard/presentation/widgets/dashboard_widgets.dart
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── Warna ────────────────────────────────────────────────────────────────────
+// ── Warna Gradien Header per Role ─────────────────────────────────────────────
 class DC {
-  static const blue       = Color(0xFF2563EB);
-  static const blueDark   = Color(0xFF1D4ED8);
-  static const blueBg     = Color(0xFFEFF6FF);
-  static const cyan       = Color(0xFF06B6D4);
-  static const cyanBg     = Color(0xFFECFEFF);
-  static const amber      = Color(0xFFF59E0B);
-  static const amberBg    = Color(0xFFFFFBEB);
-  static const green      = Color(0xFF10B981);
-  static const greenBg    = Color(0xFFECFDF5);
-  static const red        = Color(0xFFEF4444);
-  static const redBg      = Color(0xFFFEF2F2);
-  static const purple     = Color(0xFF7C3AED);
-  static const purpleBg   = Color(0xFFF5F3FF);
-  static const surface    = Color(0xFFFFFFFF);
-  static const surface2   = Color(0xFFF8FAFC);
-  static const bg         = Color(0xFFF1F5F9);
-  static const border     = Color(0xFFE2E8F0);
-  static const txt        = Color(0xFF0F172A);
-  static const txt2       = Color(0xFF475569);
-  static const txt3       = Color(0xFF94A3B8);
-
-  // Header gradient per role
-  static const adminGrad    = [Color(0xFF1E3A8A), Color(0xFF2563EB)];
-  static const userGrad     = [Color(0xFF1D4ED8), Color(0xFF3B82F6)];
-  static const helpdeskGrad = [Color(0xFF5B21B6), Color(0xFF7C3AED)];
+  static const adminGrad    = [Color(0xFF1565D8), Color(0xFF2B9FF0)];
+  static const userGrad     = [Color(0xFF1565D8), Color(0xFF2B9FF0)];
+  static const helpdeskGrad = [Color(0xFF4C1D95), Color(0xFF7C3AED)];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HEADER CARD — gradient per role (Dominant visual hierarchy)
+// 1. DASHBOARD HEADER WIDGET
 // ─────────────────────────────────────────────────────────────────────────────
 class DashboardHeader extends StatelessWidget {
   final String name;
@@ -60,8 +33,8 @@ class DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-    final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    final days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     final dateStr = '${days[now.weekday % 7]}, ${now.day} ${months[now.month - 1]} ${now.year}';
 
     return Container(
@@ -72,13 +45,12 @@ class DashboardHeader extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Baris atas: avatar + nama (Greeting is dominant) ───────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -87,7 +59,7 @@ class DashboardHeader extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -109,28 +81,25 @@ class DashboardHeader extends StatelessWidget {
                       Text(
                         'Selamat datang,',
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.75),
-                          letterSpacing: 0.5,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withOpacity(0.75),
                         ),
                       ),
                       Text(
                         '$name 👋',
                         style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
-                          letterSpacing: -0.5,
+                          letterSpacing: -0.3,
                         ),
                       ),
-                      const SizedBox(height: 1),
                       Text(
                         subtitle,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: Colors.white.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -139,13 +108,11 @@ class DashboardHeader extends StatelessWidget {
                 const SizedBox(width: 8),
                 // Role chip
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3), width: .8),
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 0.8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -158,7 +125,7 @@ class DashboardHeader extends StatelessWidget {
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
-                          letterSpacing: .4,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -166,27 +133,24 @@ class DashboardHeader extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            // ── Baris bawah: tanggal + online pill ─────────────────────────
+            const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.calendar_today_outlined,
-                    size: 11, color: Colors.white.withValues(alpha: 0.7)),
+                Icon(Icons.calendar_today_outlined, size: 11, color: Colors.white.withOpacity(0.7)),
                 const SizedBox(width: 5),
                 Text(
                   dateStr,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity(0.7),
                   ),
                 ),
                 const Spacer(),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -220,164 +184,7 @@ class DashboardHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAT CARD GRID — 2×2
-// ─────────────────────────────────────────────────────────────────────────────
-class StatCardGrid extends StatelessWidget {
-  final List<StatCardData> items;
-  const StatCardGrid({super.key, required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.35,
-      children: items.map((d) => _StatCard(data: d)).toList(),
-    );
-  }
-}
-
-class StatCardData {
-  final String label;
-  final int value;
-  final IconData icon;
-  final Color color;
-  final String? trend;
-
-  const StatCardData({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    this.trend,
-  });
-}
-
-class _StatCard extends StatefulWidget {
-  final StatCardData data;
-  const _StatCard({required this.data});
-
-  @override
-  State<_StatCard> createState() => _StatCardState();
-}
-
-class _StatCardState extends State<_StatCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _scale = Tween<double>(begin: 1, end: .95).animate( // Premium touch scale
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final d = widget.data;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final bgColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-    final shadowColor = isDark ? Colors.transparent : Colors.black.withValues(alpha: 0.03);
-    final valueColor = d.color;
-    final labelColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-
-    return GestureDetector(
-      onTapDown: (_) {
-        HapticFeedback.lightImpact();
-        _ctrl.forward();
-      },
-      onTapUp: (_) => _ctrl.reverse(),
-      onTapCancel: () => _ctrl.reverse(),
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: borderColor, width: 0.8),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(d.icon, size: 20, color: d.color),
-                  const Spacer(),
-                  if (d.trend != null) ...[
-                    Icon(
-                      d.trend!.startsWith('+')
-                          ? Icons.trending_up_rounded
-                          : Icons.trending_down_rounded,
-                      size: 14,
-                      color: d.trend!.startsWith('+') ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      d.trend!,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: d.trend!.startsWith('+') ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const Spacer(),
-              Text(
-                d.value.toString(),
-                style: TextStyle(
-                  fontSize: 32, // Stronger value typography
-                  fontWeight: FontWeight.w800,
-                  color: valueColor,
-                  height: 1,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                d.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: labelColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION HEADER — titik biru + judul + optional link
+// 2. SECTION HEADER
 // ─────────────────────────────────────────────────────────────────────────────
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -393,36 +200,33 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8, top: 4),
       child: Row(
         children: [
           Container(
             width: 3,
-            height: 16,
+            height: 14,
             decoration: BoxDecoration(
-              color: DC.blue,
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(width: 8),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : DC.txt,
-            ),
+            style: AppTextStyles.sectionHeading,
           ),
           if (linkText != null) ...[
             const Spacer(),
             GestureDetector(
               onTap: onLink,
-              child: Text(
-                linkText!,
-                style: const TextStyle(fontSize: 12, color: DC.blue),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  linkText!,
+                  style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                ),
               ),
             ),
           ],
@@ -433,353 +237,630 @@ class SectionHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TICKET ROW CARD — recent/assigned tickets (Scale animation + Chevron indicator)
+// 3. STAT CARD GRID
 // ─────────────────────────────────────────────────────────────────────────────
-class TicketRowCard extends StatefulWidget {
-  final String title;
-  final String description;
-  final String status;
-  final String? priority;
-  final String? creatorEmail;
-  final String? agentEmail;
-  final String? dateStr;
-  final bool hasUnread;
-  final Color? leftBorderColor;
-  final VoidCallback? onTap;
+class StatItem {
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color iconColor;
 
-  const TicketRowCard({
-    super.key,
-    required this.title,
-    required this.description,
-    required this.status,
-    this.priority,
-    this.creatorEmail,
-    this.agentEmail,
-    this.dateStr,
-    this.hasUnread = false,
-    this.leftBorderColor,
-    this.onTap,
+  const StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.iconColor,
   });
-
-  @override
-  State<TicketRowCard> createState() => _TicketRowCardState();
 }
 
-class _TicketRowCardState extends State<TicketRowCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _scale;
+class StatCardGrid extends StatelessWidget {
+  final List<StatItem> items;
 
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 120),
-    );
-    _scale = Tween<double>(begin: 1, end: .97).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
+  const StatCardGrid({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) {
-    final (statusBg, statusFg, statusLabel) = _statusStyle(widget.status);
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 2.2,
+      children: items.map((item) => _StatCard(item: item)).toList(),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final StatItem item;
+  const _StatCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = AppColors.cardBg(context);
+    final cardBorder = AppColors.cardBorderColor(context);
+    final numColor = isDark ? Colors.white : AppColors.textPrimary;
 
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorderColor = isDark ? const Color(0xFF334155) : DC.border;
-    final titleColor = isDark ? Colors.white : DC.txt;
-    final descColor = isDark ? const Color(0xFFCBD5E1) : DC.txt2;
-    final metaColor = isDark ? const Color(0xFF94A3B8) : DC.txt3;
-
-    return GestureDetector(
-      onTapDown: (_) {
-        HapticFeedback.lightImpact();
-        _ctrl.forward();
-      },
-      onTapUp: (_) => _ctrl.reverse(),
-      onTapCancel: () => _ctrl.reverse(),
-      onTap: () {
-        HapticFeedback.selectionClick();
-        widget.onTap?.call();
-      },
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: widget.leftBorderColor != null
-                ? const BorderRadius.only(
-                    topRight: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
-                  )
-                : BorderRadius.circular(12),
-            border: Border(
-              left: widget.leftBorderColor != null
-                  ? BorderSide(color: widget.leftBorderColor!, width: 3)
-                  : BorderSide(color: cardBorderColor, width: .8),
-              top: BorderSide(color: cardBorderColor, width: .8),
-              right: BorderSide(color: cardBorderColor, width: .8),
-              bottom: BorderSide(color: cardBorderColor, width: .8),
-            ),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: cardBorder, width: 0.6),
+        boxShadow: [AppColors.cardShadow],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
             children: [
+              Icon(item.icon, size: 13, color: item.iconColor),
+              const SizedBox(width: 5),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Baris judul + status badge
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.title,
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w600,
-                              color: titleColor,
-                              letterSpacing: -0.1,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: statusBg,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            statusLabel,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: statusFg,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Deskripsi
-                    Text(
-                      widget.description,
-                      style: TextStyle(fontSize: 11.5, color: descColor, height: 1.4),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    // Indikator balasan baru
-                    if (widget.hasUnread) ...[
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: DC.amber,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            'Ada balasan baru',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: DC.amber,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    // Meta row: creator, agent, tanggal
-                    if (widget.creatorEmail != null || widget.agentEmail != null || widget.dateStr != null) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          if (widget.creatorEmail != null) ...[
-                            Icon(Icons.person_outline_rounded,
-                                size: 11, color: metaColor),
-                            const SizedBox(width: 3),
-                            Flexible(
-                              child: Text(
-                                widget.creatorEmail!,
-                                style: TextStyle(
-                                    fontSize: 10, color: metaColor),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                          ],
-                          if (widget.agentEmail != null) ...[
-                            Icon(Icons.headset_mic_outlined,
-                                size: 11, color: metaColor),
-                            const SizedBox(width: 3),
-                            Flexible(
-                              child: Text(
-                                widget.agentEmail!,
-                                style: TextStyle(
-                                    fontSize: 10, color: metaColor),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                          ],
-                          if (widget.dateStr != null) ...[
-                            Icon(Icons.calendar_today_outlined,
-                                size: 11, color: metaColor),
-                            const SizedBox(width: 3),
-                            Text(
-                              widget.dateStr!,
-                              style: TextStyle(fontSize: 10, color: metaColor),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ],
+                child: Text(
+                  item.label,
+                  style: AppTextStyles.caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 10),
-              // Chevron arrow indicating clickability
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
               ),
             ],
           ),
+          const SizedBox(height: 3),
+          Text(
+            '${item.value}',
+            style: AppTextStyles.statNumber.copyWith(color: numColor),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. HERO ACTION BANNER
+// ─────────────────────────────────────────────────────────────────────────────
+class HeroActionBanner extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String ctaLabel;
+  final VoidCallback onCtaTap;
+  final IconData? backgroundIcon;
+  final double? progress;
+  final String? progressLabel;
+
+  const HeroActionBanner({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.ctaLabel,
+    required this.onCtaTap,
+    this.backgroundIcon,
+    this.progress,
+    this.progressLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primaryDark, AppColors.primary],
+        ),
+        boxShadow: [AppColors.cardShadow],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.05),
+                      Colors.black.withOpacity(0.45),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (backgroundIcon != null)
+              Positioned(
+                right: 12,
+                top: 12,
+                child: Icon(backgroundIcon, size: 44, color: Colors.white.withOpacity(0.2)),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white.withOpacity(0.85),
+                    ),
+                  ),
+                  if (progress != null || progressLabel != null) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (progressLabel != null)
+                          Text(
+                            progressLabel!,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (progress != null) ...[
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: progress!.clamp(0.0, 1.0),
+                          minHeight: 4,
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                    ],
+                  ],
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: onCtaTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primary,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      ctaLabel,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-
-  (Color bg, Color fg, String label) _statusStyle(String s) {
-    switch (s.toLowerCase()) {
-      case 'open':
-        return (DC.cyanBg, const Color(0xFF0E7490), 'Open');
-      case 'process':
-        return (DC.amberBg, const Color(0xFF92400E), 'Process');
-      case 'pending':
-        return (DC.purpleBg, const Color(0xFF5B21B6), 'Pending');
-      case 'done':
-      case 'closed':
-        return (DC.greenBg, const Color(0xFF065F46), 'Done');
-      default:
-        return (const Color(0xFFF1F5F9), DC.txt2, s);
-    }
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROGRESS BAR CARD — SLA / daily target / tiket aktif
+// 5. CATEGORY PILL ROW
 // ─────────────────────────────────────────────────────────────────────────────
-class ProgressBarCard extends StatelessWidget {
+class CategoryItem {
   final String label;
-  final String valueLabel;
-  final double progress;
-  final Color barColor;
-  final String? bottomLeft;
-  final String? bottomRight;
-  final Color? bottomRightColor;
+  final IconData icon;
+  final String value;
 
-  const ProgressBarCard({
+  const CategoryItem({required this.label, required this.icon, required this.value});
+}
+
+class CategoryPillRow extends StatelessWidget {
+  final List<CategoryItem> categories;
+  final ValueChanged<String> onCategoryTap;
+
+  const CategoryPillRow({
     super.key,
-    required this.label,
-    required this.valueLabel,
-    required this.progress,
-    required this.barColor,
-    this.bottomLeft,
-    this.bottomRight,
-    this.bottomRightColor,
+    required this.categories,
+    required this.onCategoryTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorderColor = isDark ? const Color(0xFF334155) : DC.border;
-    final labelColor = isDark ? const Color(0xFFCBD5E1) : DC.txt2;
-    final bottomLabelColor = isDark ? const Color(0xFF94A3B8) : DC.txt3;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorderColor, width: .8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: TextStyle(fontSize: 11, color: labelColor)),
-              Text(
-                valueLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: barColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              minHeight: 6,
-              backgroundColor: isDark ? const Color(0xFF334155) : DC.border,
-              valueColor: AlwaysStoppedAnimation<Color>(barColor),
-            ),
-          ),
-          if (bottomLeft != null || bottomRight != null) ...[
-            const SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (bottomLeft != null)
-                  Text(bottomLeft!,
-                      style: TextStyle(fontSize: 10, color: bottomLabelColor)),
-                if (bottomRight != null)
-                  Text(
-                    bottomRight!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: bottomRightColor ?? bottomLabelColor,
+    return Row(
+      children: categories
+          .map(
+            (c) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: InkWell(
+                  onTap: () => onCategoryTap(c.value),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(c.icon, size: 20, color: AppColors.primary),
+                        const SizedBox(height: 4),
+                        Text(
+                          c.label,
+                          style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5B. CATEGORY GRID (Task 5)
+// ─────────────────────────────────────────────────────────────────────────────
+class CategoryGrid extends StatelessWidget {
+  final List<CategoryItem> categories;
+  final ValueChanged<String> onCategoryTap;
+
+  const CategoryGrid({
+    super.key,
+    required this.categories,
+    required this.onCategoryTap,
+  });
+
+  Color _getCategoryColor(String value) {
+    switch (value.toLowerCase()) {
+      case 'network':
+        return AppColors.categoryNetwork;
+      case 'hardware':
+        return AppColors.categoryHardware;
+      case 'software':
+        return AppColors.categorySoftware;
+      default:
+        return AppColors.categoryOther;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 1.6,
+      children: categories.map((c) {
+        final color = _getCategoryColor(c.value);
+        final bgColor = color.withOpacity(isDark ? 0.15 : 0.08);
+        return InkWell(
+          onTap: () => onCategoryTap(c.value),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.cardBg(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.cardBorderColor(context),
+                width: 0.6,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
               ],
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Icon(c.icon, size: 22, color: color),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  c.label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. UPDATE ALERT BANNER
+// ─────────────────────────────────────────────────────────────────────────────
+class UpdateAlertBanner extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  const UpdateAlertBanner({
+    super.key,
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (unreadCount <= 0) return const SizedBox.shrink();
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.chip),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.statusWarningBg,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, size: 16, color: AppColors.statusWarningText),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '$unreadCount tiket ada update baru',
+                style: TextStyle(fontSize: 11, color: AppColors.statusWarningText, fontWeight: FontWeight.w500),
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 16, color: AppColors.statusWarningText),
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INSIGHT MINI CARD — metric kecil
+// 7. TICKET BOARDING CARD (Pengganti TicketRowCard)
+// ─────────────────────────────────────────────────────────────────────────────
+class TicketBoardingCard extends StatelessWidget {
+  final String ticketCode;
+  final String title;
+  final String status;
+  final IconData categoryIcon;
+  final DateTime createdAt;
+  final String? assignedAgentName;
+  final String? createdByName;
+  final bool hasUnread;
+  final VoidCallback onTap;
+  final String? category;
+
+  const TicketBoardingCard({
+    super.key,
+    required this.ticketCode,
+    required this.title,
+    required this.status,
+    required this.categoryIcon,
+    required this.createdAt,
+    required this.onTap,
+    this.assignedAgentName,
+    this.createdByName,
+    this.hasUnread = false,
+    this.category,
+  });
+
+  Color _getCategoryColor(String? value) {
+    if (value == null) return AppColors.categoryOther;
+    switch (value.toLowerCase()) {
+      case 'network':
+        return AppColors.categoryNetwork;
+      case 'hardware':
+        return AppColors.categoryHardware;
+      case 'software':
+        return AppColors.categorySoftware;
+      default:
+        return AppColors.categoryOther;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (statusBg, statusText) = AppColors.statusColors(status);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final cardBg = AppColors.cardBg(context);
+    final cardBorder = AppColors.cardBorderColor(context);
+    final tColor = isDark ? Colors.white : AppColors.textPrimary;
+    final subText = isDark ? AppColors.textTertiary : AppColors.textPrimary;
+
+    final dateStr = '${createdAt.day} ${_monthName(createdAt.month)} ${createdAt.year}';
+
+    final catColor = _getCategoryColor(category);
+    final catBg = catColor.withOpacity(isDark ? 0.15 : 0.08);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: cardBorder, width: 0.6),
+                boxShadow: [AppColors.cardShadow],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        ticketCode.length > 8 ? '#${ticketCode.substring(0, 8)}...' : '#$ticketCode', 
+                        style: AppTextStyles.caption
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: statusBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _statusLabel(status),
+                          style: TextStyle(fontSize: 10, color: statusText, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: catBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(categoryIcon, size: 20, color: catColor),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: AppTextStyles.cardTitle.copyWith(color: tColor),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: cardBorder, width: 0.6, style: BorderStyle.solid),
+                      ),
+                    ),
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Dibuat', style: AppTextStyles.caption),
+                            Text(dateStr, style: TextStyle(fontSize: 11, color: subText)),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              createdByName != null ? 'Dibuat oleh' : 'Agent',
+                              style: AppTextStyles.caption,
+                            ),
+                            Text(
+                              createdByName ?? (assignedAgentName ?? 'Belum ditugaskan'),
+                              style: TextStyle(fontSize: 11, color: subText),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (hasUnread)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: AppColors.statusDangerDot,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: cardBg, width: 1.5),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _statusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return 'Open';
+      case 'in_progress':
+      case 'process':
+      case 'pending':
+        return 'Diproses';
+      case 'closed':
+      case 'done':
+        return 'Closed';
+      default:
+        return status;
+    }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    return months[month - 1];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. INSIGHT MINI CARD
 // ─────────────────────────────────────────────────────────────────────────────
 class InsightMiniCard extends StatelessWidget {
   final String label;
@@ -802,30 +883,27 @@ class InsightMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorderColor = isDark ? const Color(0xFF334155) : DC.border;
-    final labelColor = isDark ? const Color(0xFF94A3B8) : DC.txt3;
-    final valColor = isDark ? Colors.white : DC.txt;
+    final cardBg = AppColors.cardBg(context);
+    final cardBorder = AppColors.cardBorderColor(context);
+    final labelColor = isDark ? AppColors.textTertiary : AppColors.textSecondary;
+    final valColor = isDark ? Colors.white : AppColors.textPrimary;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorderColor, width: .8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: cardBorder, width: 0.6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 10, color: labelColor, letterSpacing: .3)),
+          Text(label, style: TextStyle(fontSize: 10, color: labelColor, letterSpacing: 0.3)),
           const SizedBox(height: 5),
           Text(
             value,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: valColor,
               height: 1,
@@ -837,7 +915,7 @@ class InsightMiniCard extends StatelessWidget {
               subtitle!,
               style: TextStyle(
                 fontSize: 10,
-                color: subtitleColor ?? (isDark ? const Color(0xFFCBD5E1) : DC.txt2),
+                color: subtitleColor ?? (isDark ? Colors.white70 : AppColors.textSecondary),
               ),
             ),
           ],
@@ -848,9 +926,8 @@ class InsightMiniCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: barProgress!.clamp(0.0, 1.0),
                 minHeight: 4,
-                backgroundColor: isDark ? const Color(0xFF334155) : DC.border,
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(barColor ?? DC.blue),
+                backgroundColor: isDark ? const Color(0xFF334155) : AppColors.borderLight,
+                valueColor: AlwaysStoppedAnimation<Color>(barColor ?? AppColors.primary),
               ),
             ),
           ],
@@ -861,34 +938,33 @@ class InsightMiniCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// QUICK ACTION BUTTON
+// 9. QUICK ACTION BUTTON (Re-styled Tile)
 // ─────────────────────────────────────────────────────────────────────────────
 class QuickActionButton extends StatelessWidget {
   final String label;
   final String? subtitle;
   final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
   final VoidCallback? onTap;
 
+  // parameter iconBg dan iconColor dipertahankan tanda tanya di constructor
+  // agar tidak merusak kompabilitas parameter lama tapi diabaikan di render visual.
   const QuickActionButton({
     super.key,
     required this.label,
     this.subtitle,
     required this.icon,
-    required this.iconBg,
-    required this.iconColor,
     this.onTap,
+    Color? iconBg,
+    Color? iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorderColor = isDark ? const Color(0xFF334155) : DC.border;
-    final labelColor = isDark ? Colors.white : DC.txt;
-    final subColor = isDark ? const Color(0xFFCBD5E1) : DC.txt3;
+    final cardBg = AppColors.cardBg(context);
+    final cardBorderColor = AppColors.cardBorderColor(context);
+    final labelColor = isDark ? Colors.white : AppColors.textPrimary;
+    final subColor = isDark ? AppColors.textTertiary : AppColors.textSecondary;
 
     return GestureDetector(
       onTap: () {
@@ -899,8 +975,8 @@ class QuickActionButton extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorderColor, width: .8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: cardBorderColor, width: .6),
         ),
         child: Row(
           children: [
@@ -908,15 +984,16 @@ class QuickActionButton extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: isDark ? iconColor.withValues(alpha: 0.12) : iconBg,
+                color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, size: 17, color: iconColor),
+              child: Icon(icon, size: 17, color: AppColors.primary),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     label,
@@ -925,11 +1002,15 @@ class QuickActionButton extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: labelColor,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (subtitle != null)
                     Text(
                       subtitle!,
                       style: TextStyle(fontSize: 10, color: subColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                 ],
               ),
@@ -942,172 +1023,7 @@ class QuickActionButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ALERT CARD — tiket prioritas tinggi / SLA warning (Scale animation + Chevron)
-// ─────────────────────────────────────────────────────────────────────────────
-class AlertTicketCard extends StatefulWidget {
-  final String title;
-  final String subtitle;
-  final String alertText;
-  final Color alertColor;
-  final VoidCallback? onTap;
-
-  const AlertTicketCard({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.alertText,
-    required this.alertColor,
-    this.onTap,
-  });
-
-  @override
-  State<AlertTicketCard> createState() => _AlertTicketCardState();
-}
-
-class _AlertTicketCardState extends State<AlertTicketCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 120),
-    );
-    _scale = Tween<double>(begin: 1, end: .97).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorderColor = isDark ? const Color(0xFF334155) : DC.border;
-    final titleColor = isDark ? Colors.white : DC.txt;
-    final descColor = isDark ? const Color(0xFFCBD5E1) : DC.txt2;
-
-    return GestureDetector(
-      onTapDown: (_) {
-        HapticFeedback.lightImpact();
-        _ctrl.forward();
-      },
-      onTapUp: (_) => _ctrl.reverse(),
-      onTapCancel: () => _ctrl.reverse(),
-      onTap: () {
-        HapticFeedback.selectionClick();
-        widget.onTap?.call();
-      },
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(12),
-              bottomRight: Radius.circular(12),
-            ),
-            border: Border(
-              left: BorderSide(color: widget.alertColor, width: 3),
-              top: BorderSide(color: cardBorderColor, width: .8),
-              right: BorderSide(color: cardBorderColor, width: .8),
-              bottom: BorderSide(color: cardBorderColor, width: .8),
-            ),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.title,
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w600,
-                              color: titleColor,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: widget.alertColor.withValues(alpha: .1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'High',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: widget.alertColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      widget.subtitle,
-                      style: TextStyle(fontSize: 11, color: descColor, height: 1.4),
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: widget.alertColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          widget.alertText,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: widget.alertColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DASHBOARD EMPTY STATE (Centered empty indicator wrapped in ConstrainedBox)
+// 10. DASHBOARD EMPTY STATE
 // ─────────────────────────────────────────────────────────────────────────────
 class DashboardEmptyState extends StatelessWidget {
   final IconData icon;
@@ -1126,31 +1042,19 @@ class DashboardEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorderColor = isDark ? const Color(0xFF334155) : DC.border;
-    final titleColor = isDark ? Colors.white : DC.txt;
-    final subColor = isDark ? const Color(0xFFCBD5E1) : DC.txt3;
+    final cardBg = AppColors.cardBg(context);
+    final cardBorder = AppColors.cardBorderColor(context);
+    final titleColor = isDark ? Colors.white : AppColors.textPrimary;
+    final subColor = isDark ? AppColors.textTertiary : AppColors.textSecondary;
 
     return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: 180,
-      ),
+      constraints: const BoxConstraints(minHeight: 150),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorderColor, width: 0.8),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: cardBorder, width: 0.6),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1159,34 +1063,33 @@ class DashboardEmptyState extends StatelessWidget {
             if (imageAsset != null) ...[
               Image.asset(
                 imageAsset!,
-                width: 180,
-                height: 180,
+                width: 140,
+                height: 140,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
             ] else ...[
               Icon(
                 icon,
-                size: 44,
+                size: 36,
                 color: isDark ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
             ],
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
                 color: titleColor,
-                letterSpacing: -0.2,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 11,
                 color: subColor,
               ),
               textAlign: TextAlign.center,
@@ -1199,9 +1102,8 @@ class DashboardEmptyState extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ACTIVITY TIMELINE WIDGETS & HELPERS
+// 11. TIMELINE ACTIVITIES & HELPERS (TETAP pakai tickets + notifications)
 // ─────────────────────────────────────────────────────────────────────────────
-
 enum ActivityType {
   ticket,
   notification,
@@ -1231,7 +1133,7 @@ String formatRelativeTime(DateTime dateTime) {
   } else if (diff.inDays < 7) {
     return '${diff.inDays} hari lalu';
   } else {
-    final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     return '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}';
   }
 }
@@ -1242,34 +1144,38 @@ List<Map<String, dynamic>> getTimelineActivities({
 }) {
   final List<Map<String, dynamic>> activities = [];
 
-  // 1. Map tickets to activities
   for (final ticket in tickets) {
-    // Safeguard 1: Null CreatedAt Protection
-    final timestamp = (ticket.createdAt as dynamic) ?? DateTime.now();
-    activities.add({
-      ActivityKeys.type: ActivityType.ticket,
-      ActivityKeys.title: 'Tiket Baru',
-      ActivityKeys.message: ticket.title,
-      ActivityKeys.timestamp: timestamp,
-      ActivityKeys.ticket: ticket,
-      ActivityKeys.notification: null,
+    final timestamp = ticket.createdAt;
+
+    // Check for matching notification (Task 3 de-duplication)
+    final hasMatchingNotification = notifications.any((n) {
+      if (n.ticketId != ticket.id) return false;
+      final nTime = DateTime.tryParse(n.createdAt);
+      if (nTime == null) return false;
+      final diff = nTime.difference(ticket.createdAt).abs();
+      return diff.inSeconds <= 5;
     });
+
+    if (!hasMatchingNotification) {
+      activities.add({
+        ActivityKeys.type: ActivityType.ticket,
+        ActivityKeys.title: 'Tiket Baru',
+        ActivityKeys.message: ticket.title,
+        ActivityKeys.timestamp: timestamp,
+        ActivityKeys.ticket: ticket,
+        ActivityKeys.notification: null,
+      });
+    }
   }
 
-  // 2. Map notifications to activities
   for (final notification in notifications) {
     final timestamp = DateTime.tryParse(notification.createdAt) ?? DateTime.now();
     
-    // Find associated ticket
     TicketModel? associatedTicket;
     if (notification.ticketId != null) {
       try {
-        associatedTicket = tickets.firstWhere(
-          (t) => t.id == notification.ticketId,
-        );
-      } catch (_) {
-        // Associated ticket not found
-      }
+        associatedTicket = tickets.firstWhere((t) => t.id == notification.ticketId);
+      } catch (_) {}
     }
 
     activities.add({
@@ -1282,7 +1188,6 @@ List<Map<String, dynamic>> getTimelineActivities({
     });
   }
 
-  // Safeguard 2: Stable Sorting
   activities.sort((a, b) {
     final tA = a[ActivityKeys.timestamp] as DateTime;
     final tB = b[ActivityKeys.timestamp] as DateTime;
@@ -1345,11 +1250,11 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
     final isClickable = associatedTicket != null;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorderColor = isDark ? const Color(0xFF334155) : DC.border;
-    final titleColor = isDark ? Colors.white : DC.txt;
-    final msgColor = isDark ? const Color(0xFFCBD5E1) : DC.txt2;
-    final timeColor = isDark ? const Color(0xFF94A3B8) : DC.txt3;
+    final cardBg = AppColors.cardBg(context);
+    final cardBorder = AppColors.cardBorderColor(context);
+    final titleColor = isDark ? Colors.white : AppColors.textPrimary;
+    final msgColor = isDark ? AppColors.textTertiary : AppColors.textSecondary;
+    final timeColor = isDark ? AppColors.textTertiary : AppColors.textSecondary;
 
     final IconData iconData;
     final Color iconColor;
@@ -1357,12 +1262,12 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
 
     if (type == ActivityType.ticket) {
       iconData = Icons.confirmation_number_outlined;
-      iconColor = DC.blue;
-      iconBg = isDark ? DC.blue.withValues(alpha: 0.15) : DC.blueBg;
+      iconColor = AppColors.primary;
+      iconBg = AppColors.primaryLight;
     } else {
       iconData = Icons.notifications_outlined;
-      iconColor = DC.amber;
-      iconBg = isDark ? DC.amber.withValues(alpha: 0.15) : DC.amberBg;
+      iconColor = AppColors.statusWarningText;
+      iconBg = AppColors.statusWarningBg;
     }
 
     Widget content = Container(
@@ -1370,20 +1275,20 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorderColor, width: 0.8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: cardBorder, width: 0.6),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: iconBg,
               shape: BoxShape.circle,
             ),
-            child: Icon(iconData, size: 18, color: iconColor),
+            child: Icon(iconData, size: 16, color: iconColor),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1398,8 +1303,8 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
                       child: Text(
                         title,
                         style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                           color: titleColor,
                         ),
                         maxLines: 1,
@@ -1412,7 +1317,7 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
                       style: TextStyle(
                         fontSize: 10,
                         color: timeColor,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -1421,7 +1326,7 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
                 Text(
                   message,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 11,
                     color: msgColor,
                     height: 1.3,
                   ),
@@ -1436,7 +1341,7 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
             Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+              color: isDark ? Colors.white24 : AppColors.textTertiary,
             ),
           ],
         ],
@@ -1465,4 +1370,3 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
     }
   }
 }
-

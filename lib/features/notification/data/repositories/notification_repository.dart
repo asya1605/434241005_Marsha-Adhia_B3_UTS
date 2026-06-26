@@ -27,10 +27,8 @@ class NotificationRepository {
             // admin lihat semua
             filtered = data;
           } else if (role == 'helpdesk') {
-            // helpdesk hanya notif assigned ke dia
-            filtered = data.where((e) => 
-               e['user_id'] == userId && e['title'] == 'Ticket Assigned'
-            ).toList();
+            // helpdesk melihat semua notifikasi miliknya (assigned, comment, dll)
+            filtered = data.where((e) => e['user_id'] == userId).toList();
           } else {
             // user biasa tidak lihat assigned notif
             filtered = data.where((e) => 
@@ -46,6 +44,21 @@ class NotificationRepository {
         .handleError((error) {
           debugPrint("REALTIME ERROR: $error");
         });
+  }
+
+  Future<void> insertNotification({
+    required String userId,
+    required String title,
+    required String message,
+    String? ticketId,
+  }) async {
+    await _supabase.from('notifications').insert({
+      'user_id': userId,
+      'title': title,
+      'message': message,
+      'is_read': false,
+      'ticket_id': ticketId,
+    });
   }
 
   Future<void> markAsRead(String id) async {

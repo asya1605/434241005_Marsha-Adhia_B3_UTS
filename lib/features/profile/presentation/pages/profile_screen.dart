@@ -4,8 +4,14 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/pages/login_screen.dart';
-import '../widgets/profile_item.dart';
+import '../../../notification/presentation/providers/notification_provider.dart';
+import '../../../dashboard/presentation/widgets/app_design_tokens.dart';
 
+/// PROFILE PAGE — redesign v2
+///
+/// Konsisten dengan Notifications & My Tickets: header biru solid,
+/// section heading dengan accent bar, card info dengan ikon fixed-width
+/// supaya semua label align di titik horizontal yang sama.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -13,495 +19,307 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final role = authProvider.role ?? "user";
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
 
     final name = authProvider.name ?? "-";
     final email = authProvider.email ?? "-";
+    final role = authProvider.role ?? "user";
 
     // Role display config
-    Color roleBg;
-    Color roleFg;
     IconData roleIcon;
     String roleLabel;
 
-    switch (role) {
+    switch (role.toLowerCase()) {
       case "admin":
-        roleBg = const Color(0xFFFEF3C7);
-        roleFg = const Color(0xFFB45309);
         roleIcon = Icons.shield_outlined;
         roleLabel = "Admin";
         break;
       case "helpdesk":
-        roleBg = const Color(0xFFEDE9FE);
-        roleFg = const Color(0xFF6D28D9);
         roleIcon = Icons.headset_mic_outlined;
         roleLabel = "Helpdesk";
         break;
       default:
-        roleBg = const Color(0xFFEFF6FF);
-        roleFg = const Color(0xFF1D4ED8);
         roleIcon = Icons.person_outline_rounded;
         roleLabel = "User";
     }
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
-      appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF161B2E) : Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: Colors.black12,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: isDark ? Colors.white : const Color(0xFF111827),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF111827),
-            letterSpacing: -0.3,
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: isDark
-                ? Colors.white.withOpacity(0.06)
-                : const Color(0xFFE5E7EB),
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
+      backgroundColor: AppColors.bgPage,
+      body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            /// ── PROFILE HERO ────────────────────────────────────────
+            // ===== Header biru =====
             Container(
               width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF1A1F35), const Color(0xFF0D1321)]
-                      : [const Color(0xFF1E40AF), const Color(0xFF3B82F6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+              color: AppColors.primaryDark,
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xl + 6,
               ),
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 36),
               child: Column(
                 children: [
-                  /// Avatar
-                  Container(
-                    width: 88,
-                    height: 88,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.35),
-                        width: 2.5,
+                  Row(
+                    children: [
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          onPressed: () => Navigator.maybePop(context),
+                          icon: const Icon(Icons.arrow_back, size: 18, color: Colors.white),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                        ),
+                      const SizedBox(width: AppSpacing.xs),
+                      const Text(
+                        'Profil',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white, height: 1),
                       ),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.person,
-                        size: 44,
-                        color: Colors.white,
-                      ),
-                    ),
+                    ],
                   ),
-
-                  const SizedBox(height: 16),
-
-                  /// Name
+                  const SizedBox(height: AppSpacing.lg),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.2),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                    ),
+                    child: const Icon(Icons.person_outline, size: 26, color: Colors.white),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: -0.3,
-                    ),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white, height: 1),
                   ),
-
-                  const SizedBox(height: 4),
-
-                  /// Email
-                  Text(
-                    email,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(0.72),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  /// Role badge
+                  const SizedBox(height: AppSpacing.xs),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.25),
-                        width: 1,
-                      ),
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      roleLabel.toUpperCase(),
+                      style: const TextStyle(fontSize: 10, color: Colors.white, height: 1, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ===== Content — overlap ke atas header sedikit =====
+            Expanded(
+              child: Transform.translate(
+                offset: const Offset(0, -10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.bgCard,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: ListView(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    children: [
+                      const _SectionLabel('Informasi Akun'),
+                  const SizedBox(height: AppSpacing.sm),
+                  _InfoCard(
+                    rows: [
+                      _InfoRow(icon: Icons.person_outline, label: 'Nama Lengkap', value: name),
+                      _InfoRow(icon: Icons.mail_outline, label: 'Email', value: email),
+                    ],
+                    lastRow: _InfoRow(
+                      icon: roleIcon,
+                      label: 'Role',
+                      value: roleLabel,
+                      valueColor: AppColors.primaryDark,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  const _SectionLabel('Preferensi'),
+                  const SizedBox(height: AppSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgCard,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      border: Border.all(color: AppColors.borderLight, width: 0.6),
                     ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(roleIcon,
-                            size: 13, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          roleLabel.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.8,
+                        SizedBox(
+                          width: 18,
+                          child: Icon(Icons.dark_mode_outlined, size: 14, color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Dark Mode',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, height: 1.3, color: AppColors.textPrimary),
+                              ),
+                              Text(
+                                isDark ? 'Saat ini aktif' : 'Saat ini nonaktif',
+                                style: AppTextStyles.bodyMeta.copyWith(fontSize: 11, height: 1.3),
+                              ),
+                            ],
                           ),
+                        ),
+                        Switch(
+                          value: isDark,
+                          activeThumbColor: AppColors.primaryDark,
+                          onChanged: (v) {
+                            themeProvider.toggleTheme(v);
+                          },
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                  const SizedBox(height: AppSpacing.lg),
 
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// ── ACCOUNT INFO CARD ─────────────────────────────
-                  _SectionLabel(label: 'Account Info', isDark: isDark),
-                  const SizedBox(height: 12),
-                  _InfoCard(
-                    isDark: isDark,
-                    children: [
-                      _InfoRow(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Full Name',
-                        value: name,
-                        isDark: isDark,
-                      ),
-                      _Divider(isDark: isDark),
-                      _InfoRow(
-                        icon: Icons.email_outlined,
-                        label: 'Email',
-                        value: email,
-                        isDark: isDark,
-                      ),
-                      _Divider(isDark: isDark),
-                      _InfoRow(
-                        icon: roleIcon,
-                        label: 'Role',
-                        value: roleLabel,
-                        isDark: isDark,
-                        valueColor: roleFg,
-                        valueBg: isDark ? roleBg.withOpacity(0.15) : roleBg,
-                      ),
-                    ],
-                  ),
+                  const _SectionLabel('Akun'),
+                  const SizedBox(height: AppSpacing.sm),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    onTap: () async {
+                      if (context.mounted) {
+                        context.read<NotificationProvider>().clear();
+                      }
+                      await authProvider.logout();
 
-                  const SizedBox(height: 24),
-
-                  /// ── PREFERENCES ───────────────────────────────────
-                  _SectionLabel(label: 'Preferences', isDark: isDark),
-                  const SizedBox(height: 12),
-                  _InfoCard(
-                    isDark: isDark,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF1E2438)
-                                    : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                themeProvider.themeMode == ThemeMode.dark
-                                    ? Icons.dark_mode_outlined
-                                    : Icons.light_mode_outlined,
-                                size: 18,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
-                              ),
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.bgCard,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        border: Border.all(color: const Color(0xFFF0997B), width: 0.6),
+                      ),
+                      child: const Row(
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            child: Icon(Icons.logout, size: 14, color: Color(0xFFD85A30)),
+                          ),
+                          SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              'Logout',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, height: 1, color: Color(0xFFD85A30)),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Dark Mode',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: isDark
-                                          ? Colors.white
-                                          : const Color(0xFF111827),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    themeProvider.themeMode == ThemeMode.dark
-                                        ? 'Currently enabled'
-                                        : 'Currently disabled',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isDark
-                                          ? Colors.white38
-                                          : const Color(0xFF9CA3AF),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Switch(
-                              value: themeProvider.themeMode == ThemeMode.dark,
-                              onChanged: (value) {
-                                themeProvider.toggleTheme(value);
-                              },
-                              activeColor: const Color(0xFF2563EB),
-                            ),
-                          ],
-                        ),
+                          ),
+                          Icon(Icons.chevron_right, size: 16, color: Color(0xFFD85A30)),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  /// ── ACCOUNT ACTIONS ───────────────────────────────
-                  _SectionLabel(label: 'Account', isDark: isDark),
-                  const SizedBox(height: 12),
-                  _InfoCard(
-                    isDark: isDark,
-                    children: [
-                      ProfileItem(
-                        icon: Icons.logout,
-                        title: "Logout",
-                        onTap: () async {
-                          await authProvider.logout();
-
-                          if (context.mounted) {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => LoginScreen(),
-                              ),
-                              (route) => false,
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-
                   const SizedBox(height: 32),
-
-                  /// ── APP VERSION ───────────────────────────────────
                   Center(
                     child: Text(
                       'HelpDesk System  •  v1.0.0',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? Colors.white24 : const Color(0xFFD1D5DB),
-                      ),
+                      style: AppTextStyles.caption.copyWith(fontSize: 11),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
   }
 }
 
-// ─── Private helper widgets ───────────────────────────────────────────────────
-
 class _SectionLabel extends StatelessWidget {
-  final String label;
-  final bool isDark;
-
-  const _SectionLabel({required this.label, required this.isDark});
+  final String text;
+  const _SectionLabel(this.text);
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 3,
-          height: 14,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2563EB),
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white60 : const Color(0xFF6B7280),
-            letterSpacing: 0.3,
-          ),
-        ),
+        Container(width: 3, height: 10, decoration: BoxDecoration(color: AppColors.primaryDark, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 6),
+        Text(text, style: AppTextStyles.sectionHeading.copyWith(fontSize: 13.5, height: 1)),
       ],
     );
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  final List<Widget> children;
-  final bool isDark;
-
-  const _InfoCard({required this.children, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161B2E) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : const Color(0xFFE5E7EB),
-        ),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Column(children: children),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
+class _InfoRow {
   final IconData icon;
   final String label;
   final String value;
-  final bool isDark;
   final Color? valueColor;
-  final Color? valueBg;
 
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
-    required this.isDark,
     this.valueColor,
-    this.valueBg,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF1E2438)
-                  : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: isDark
-                  ? const Color(0xFF94A3B8)
-                  : const Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white54 : const Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          valueColor != null && valueBg != null
-              ? Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: valueBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: valueColor,
-                    ),
-                  ),
-                )
-              : Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF111827),
-                  ),
-                ),
-        ],
-      ),
-    );
-  }
 }
 
-class _Divider extends StatelessWidget {
-  final bool isDark;
-  const _Divider({required this.isDark});
+class _InfoCard extends StatelessWidget {
+  final List<_InfoRow> rows;
+  final _InfoRow? lastRow;
+
+  const _InfoCard({required this.rows, this.lastRow});
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      indent: 66,
-      endIndent: 0,
-      color: isDark
-          ? Colors.white.withOpacity(0.06)
-          : const Color(0xFFF1F5F9),
+    final all = [...rows, ?lastRow];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.bgCard,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderLight, width: 0.6),
+      ),
+      child: Column(
+        children: List.generate(all.length, (i) {
+          final row = all[i];
+          final isLast = i == all.length - 1;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 11),
+            decoration: BoxDecoration(
+              border: isLast
+                  ? null
+                  : Border(bottom: BorderSide(color: AppColors.borderLight, width: 0.6)),
+            ),
+            child: Row(
+              children: [
+                SizedBox(width: 18, child: Icon(row.icon, size: 14, color: AppColors.textSecondary)),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(row.label, style: TextStyle(fontSize: 13, height: 1, color: AppColors.textSecondary)),
+                ),
+                Text(
+                  row.value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1,
+                    fontWeight: FontWeight.w500,
+                    color: row.valueColor ?? AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }
