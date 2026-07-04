@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/ticket_model.dart';
 import '../providers/ticket_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -63,21 +62,22 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF161B2E) : Colors.white,
+        backgroundColor: Theme.of(context).cardTheme.color,
         elevation: 0,
         scrolledUnderElevation: 1,
         shadowColor: Colors.black12,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: isDark ? Colors.white : const Color(0xFF111827),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: isDark ? Colors.white : const Color(0xFF111827),
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: Text(
           'Buat Tiket',
           style: Theme.of(context).appBarTheme.titleTextStyle,
@@ -101,18 +101,18 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withOpacity(0.08),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF2563EB).withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline_rounded,
                     size: 16,
-                    color: Color(0xFF2563EB),
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -121,8 +121,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
-                            ? const Color(0xFF93C5FD)
-                            : const Color(0xFF1D4ED8),
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context).colorScheme.primary,
                         height: 1.4,
                       ),
                     ),
@@ -138,7 +138,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF161B2E) : Colors.white,
+                color: Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark
@@ -193,7 +193,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       filled: true,
                       fillColor: isDark
                           ? const Color(0xFF0F1117)
-                          : const Color(0xFFF8FAFC),
+                          : Theme.of(context).scaffoldBackgroundColor,
                       contentPadding: const EdgeInsets.all(14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -213,8 +213,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF3B82F6),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
                           width: 2,
                         ),
                       ),
@@ -228,7 +228,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: selectedCategory,
-                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    dropdownColor: Theme.of(context).cardTheme.color,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -253,7 +253,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                           const BoxConstraints(minWidth: 0, minHeight: 0),
                       filled: true,
                       fillColor:
-                          isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+                          isDark ? const Color(0xFF0F1117) : Theme.of(context).scaffoldBackgroundColor,
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       border: OutlineInputBorder(
@@ -274,8 +274,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF3B82F6),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
                           width: 2,
                         ),
                       ),
@@ -301,7 +301,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: selectedPriority,
-                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    dropdownColor: Theme.of(context).cardTheme.color,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -326,7 +326,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                           const BoxConstraints(minWidth: 0, minHeight: 0),
                       filled: true,
                       fillColor:
-                          isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+                          isDark ? const Color(0xFF0F1117) : Theme.of(context).scaffoldBackgroundColor,
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       border: OutlineInputBorder(
@@ -347,8 +347,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF3B82F6),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
                           width: 2,
                         ),
                       ),
@@ -377,7 +377,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF161B2E) : Colors.white,
+                color: Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark
@@ -471,11 +471,11 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Theme.of(context).colorScheme.primary,
                         side: BorderSide(
                           color: isDark
                               ? const Color(0xFF2D3554)
-                              : const Color(0xFF2563EB),
+                              : Theme.of(context).colorScheme.primary,
                           width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
@@ -570,7 +570,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -664,7 +664,7 @@ class _StyledTextField extends StatelessWidget {
             const BoxConstraints(minWidth: 0, minHeight: 0),
         filled: true,
         fillColor:
-            isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+            isDark ? const Color(0xFF0F1117) : Theme.of(context).scaffoldBackgroundColor,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
@@ -685,8 +685,8 @@ class _StyledTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF3B82F6),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
             width: 2,
           ),
         ),

@@ -15,6 +15,7 @@ import 'features/notification/presentation/providers/notification_provider.dart'
 import 'features/ticket/presentation/providers/comment_provider.dart';
 import 'features/ticket/presentation/providers/ticket_history_provider.dart';
 import 'features/admin/presentation/providers/user_management_provider.dart';
+import 'features/profile/presentation/providers/settings_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,6 +71,9 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => UserManagementProvider(),
         ),
+        ChangeNotifierProvider(
+          create: (_) => SettingsProvider(),
+        ),
 
       ],
       child: const MyApp(),
@@ -118,6 +122,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
 
     return MaterialApp(
       navigatorKey: navigatorKey,
@@ -125,10 +130,10 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
 
       /// LIGHT MODE
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.getLightThemeForRole(authProvider.role ?? 'user'),
 
       /// DARK MODE
-      darkTheme: AppTheme.darkTheme,
+      darkTheme: AppTheme.getDarkThemeForRole(authProvider.role ?? 'user'),
 
       /// THEME MODE
       themeMode: themeProvider.themeMode,

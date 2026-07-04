@@ -72,25 +72,12 @@ class CustomBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Light Mode Colors
-    const barColorLight = Colors.white;
-    const activeColorLight = Color(0xFF0F172A); // Premium dark charcoal/black
-    const inactiveColorLight = Color(0xFF94A3B8); // Slate 400
-    const fabColorLight = Color(0xFF0F172A);
-    const fabIconColorLight = Colors.white;
-
-    // Dark Mode Colors
-    const barColorDark = Color(0xFF1E293B); // Slate 800
-    const activeColorDark = Colors.white;
-    const inactiveColorDark = Color(0xFF64748B); // Slate 500
-    const fabColorDark = Colors.white;
-    const fabIconColorDark = Color(0xFF0F172A);
-
-    final barColor = isDark ? barColorDark : barColorLight;
-    final activeColor = isDark ? activeColorDark : activeColorLight;
-    final inactiveColor = isDark ? inactiveColorDark : inactiveColorLight;
-    final fabColor = isDark ? fabColorDark : fabColorLight;
-    final fabIconColor = isDark ? fabIconColorDark : fabIconColorLight;
+    final colorScheme = Theme.of(context).colorScheme;
+    final barColor = colorScheme.surface;
+    final activeColor = colorScheme.primary;
+    final inactiveColor = isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
+    final fabColor = colorScheme.tertiary;
+    final fabIconColor = colorScheme.primary;
 
     return Container(
       height: 96,
@@ -160,7 +147,7 @@ class CustomBottomNavBar extends StatelessWidget {
                                 child: Center(
                                   child: Text(
                                     unreadCount > 9 ? '9+' : '$unreadCount',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.poppins(
                                       color: Colors.white,
                                       fontSize: 8,
                                       fontWeight: FontWeight.bold,
@@ -189,7 +176,7 @@ class CustomBottomNavBar extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               item.label,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.poppins(
                                 color: isSelected ? activeColor : inactiveColor,
                                 fontSize: 10,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

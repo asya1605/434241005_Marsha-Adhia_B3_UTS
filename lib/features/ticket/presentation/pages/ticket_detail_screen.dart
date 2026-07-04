@@ -77,7 +77,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   void dispose() {
     commentController.dispose();
     _scrollController.dispose();
-    _ticketHistoryProvider.clear();
     super.dispose();
   }
 
@@ -194,7 +193,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         SnackBar(
           content: Text(
             "No changes to save",
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
           ),
           backgroundColor: AppColors.statusProcess,
         ),
@@ -231,7 +230,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           SnackBar(
             content: Text(
               "Changes saved successfully",
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
             ),
             backgroundColor: AppColors.statusClosed,
           ),
@@ -243,7 +242,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           SnackBar(
             content: Text(
               "Failed to save changes: $e",
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
             ),
             backgroundColor: AppColors.priorityHigh,
           ),
@@ -367,14 +366,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     switch (status.toLowerCase()) {
       case 'open':
         return 0;
-      case 'process':
+      case 'assign':
         return 1;
-      case 'pending':
+      case 'on progress':
+      case 'on_progress':
+      case 'in progress':
+      case 'in_progress':
+      case 'process':
         return 2;
+      case 'closed':
+      case 'close':
       case 'done':
         return 3;
-      case 'closed':
-        return 4;
       default:
         return 0;
     }
@@ -382,12 +385,17 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'done':
       case 'closed':
+      case 'close':
+      case 'done':
         return AppColors.statusClosed;
+      case 'on progress':
+      case 'on_progress':
+      case 'in progress':
+      case 'in_progress':
       case 'process':
         return AppColors.statusProcess;
-      case 'pending':
+      case 'assign':
         return AppColors.statusPending;
       case 'open':
       default:
@@ -396,20 +404,22 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   double _getSlaProgress(String status) {
-    if (status.toLowerCase() == 'done' || status.toLowerCase() == 'closed') return 1.0;
+    final s = status.toLowerCase();
+    if (s == 'closed' || s == 'close' || s == 'done') return 1.0;
     final baseProgress = ((_stableHash(widget.ticket.id) % 30) + 45) / 100.0;
     return baseProgress;
   }
 
   Color _getSlaColor(double progress, String status) {
-    if (status.toLowerCase() == 'done' || status.toLowerCase() == 'closed') return AppColors.statusClosed;
+    final s = status.toLowerCase();
+    if (s == 'closed' || s == 'close' || s == 'done') return AppColors.statusClosed;
     if (progress > 0.8) return AppColors.priorityHigh;
     if (progress > 0.6) return AppColors.statusProcess;
     return AppColors.blue;
   }
 
   Widget _buildStatusStepper(bool isDark) {
-    final steps = ["Open", "Process", "Pending", "Done", "Closed"];
+    final steps = ["Open", "Assign", "On Progress", "Closed"];
     final currentIdx = _getStepIndex(selectedStatus);
 
     return Container(
@@ -430,7 +440,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             children: [
               Text(
                 "STATUS TRACKING",
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: isDark ? const Color(0xFF64748B) : AppColors.textHint,
@@ -439,7 +449,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               ),
               Text(
                 selectedStatus.toUpperCase(),
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w800,
                   color: _getStatusColor(selectedStatus),
@@ -489,7 +499,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                                   ? const Icon(Icons.check, size: 11, color: Colors.white)
                                   : Text(
                                       "${index + 1}",
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.poppins(
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.bold,
                                         color: isActive
@@ -502,7 +512,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           const SizedBox(height: 6),
                           Text(
                             stepName,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.poppins(
                               fontSize: 9,
                               fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
                               color: isActive
@@ -565,7 +575,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           const SizedBox(width: 4),
           Text(
             text,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
@@ -582,15 +592,20 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     Color bgColor = color.withOpacity(0.1);
 
     switch (status.toLowerCase()) {
-      case 'done':
       case 'closed':
+      case 'close':
+      case 'done':
         icon = Icons.check_rounded;
         break;
+      case 'on progress':
+      case 'on_progress':
+      case 'in progress':
+      case 'in_progress':
       case 'process':
         icon = Icons.sync_rounded;
         break;
-      case 'pending':
-        icon = Icons.pause_circle_outline_rounded;
+      case 'assign':
+        icon = Icons.assignment_ind_rounded;
         break;
       case 'open':
       default:
@@ -695,7 +710,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           // ID ticket kecil dan muted
           Text(
             '#TCK-$shortId',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: isDark ? const Color(0xFF64748B) : AppColors.textHint,
@@ -707,7 +722,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           // Judul paling dominan
           Text(
             widget.ticket.title,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : AppColors.textPrimary,
@@ -768,7 +783,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             children: [
               Text(
                 "SLA Progress",
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: isDark ? const Color(0xFF64748B) : AppColors.textHint,
@@ -777,7 +792,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               ),
               Text(
                 percentText,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
                   color: slaColor,
@@ -806,7 +821,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.poppins(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: isDark ? const Color(0xFF64748B) : AppColors.textHint,
@@ -816,7 +831,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
             color: isDark ? Colors.white70 : AppColors.textSecondary,
@@ -829,289 +844,373 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   Widget _buildManagementCard(BuildContext context, String role, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Kelola tiket",
-            style: GoogleFonts.outfit(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : AppColors.textPrimary,
-            ),
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.userId;
+    
+    final bool isClosed = ['closed', 'done', 'close'].contains(selectedStatus.toLowerCase());
+    
+    // If ticket is closed, show read-only card with completed banner
+    if (isClosed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            width: 1,
           ),
-          const SizedBox(height: 16),
-          
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Status pengerjaan
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Status pengerjaan",
-                      style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                      ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: AppColors.statusClosed, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  "Tiket Selesai",
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Tiket ini telah selesai dikerjakan dan ditutup. Ketentuan status tidak dapat diubah kembali.",
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildMetaGridItem(
+              "AGEN PENANGGUNG JAWAB", 
+              selectedHelpdeskName ?? 'Tidak ada agen yang ditugaskan', 
+              isDark
+            ),
+          ],
+        ),
+      );
+    }
+
+    // If ticket is not closed:
+    if (role == "admin") {
+      final bool isOpen = selectedStatus.toLowerCase() == 'open';
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Kelola Tiket (Admin)",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // If status is Open, show option to accept/receive ticket
+            if (isOpen) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: isSaving 
+                      ? null 
+                      : () async {
+                          setState(() {
+                            selectedStatus = "Assign";
+                          });
+                          await _saveChanges();
+                        },
+                  icon: const Icon(Icons.assignment_turned_in_rounded, size: 18),
+                  label: Text(
+                    "Terima Tiket (Ubah Status ke Assign)",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: selectedStatus,
-                      dropdownColor: isDark ? AppColors.surfaceDark : Colors.white,
-                      style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: isDark ? AppColors.surface2Dark : const Color(0xFFF8FAFC),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.blue,
-                            width: 1.5,
-                          ),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      items: statusList.map((s) {
-                        return DropdownMenuItem(value: s, child: Text(s));
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          selectedStatus = value;
-                        });
-                      },
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.statusPending, // Purple for Assign
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
+                    elevation: 0,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(height: 16),
+            ],
 
-              // 2. Assign agen
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Assign agen",
-                      style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
-                      ),
+            // Dropdown to assign agent
+            Text(
+              "Assign agen",
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String?>(
+              isExpanded: true,
+              initialValue: (selectedHelpdeskId == null || !helpdeskList.any((e) => e['id']?.toString() == selectedHelpdeskId))
+                  ? null
+                  : selectedHelpdeskId,
+              dropdownColor: isDark ? AppColors.surfaceDark : Colors.white,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: "Unassigned",
+                hintStyle: GoogleFonts.poppins(
+                  color: isDark ? Colors.white24 : AppColors.textHint,
+                  fontSize: 13,
+                ),
+                filled: true,
+                fillColor: isDark ? AppColors.surface2Dark : const Color(0xFFF8FAFC),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.blue,
+                    width: 1.5,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    width: 1,
+                  ),
+                ),
+              ),
+              items: [
+                DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text(
+                    'Unassigned',
+                    style: GoogleFonts.poppins(
+                      color: isDark ? Colors.white30 : AppColors.textHint,
                     ),
-                    const SizedBox(height: 6),
-                    if (role == "admin")
-                      DropdownButtonFormField<String?>(
-                        isExpanded: true,
-                        initialValue: (selectedHelpdeskId == null || !helpdeskList.any((e) => e['id']?.toString() == selectedHelpdeskId))
-                            ? null
-                            : selectedHelpdeskId,
-                        dropdownColor: isDark ? AppColors.surfaceDark : Colors.white,
-                        style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: "Unassigned",
-                          hintStyle: GoogleFonts.outfit(
-                            color: isDark ? Colors.white24 : AppColors.textHint,
-                            fontSize: 13,
-                          ),
-                          filled: true,
-                          fillColor: isDark ? AppColors.surface2Dark : const Color(0xFFF8FAFC),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                              width: 1,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.blue,
-                              width: 1.5,
-                            ),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                        items: [
-                          DropdownMenuItem<String?>(
-                            value: null,
-                            child: Text(
-                              'Unassigned',
-                              style: GoogleFonts.outfit(
-                                color: isDark ? Colors.white30 : AppColors.textHint,
-                              ),
-                            ),
-                          ),
-                          ...helpdeskList.map((e) {
-                            return DropdownMenuItem<String?>(
-                              value: e['id']?.toString(),
-                              child: Text(
-                                e['name'] ?? 'No Name',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            );
-                          }),
-                        ],
-                        selectedItemBuilder: (BuildContext context) {
-                          return [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Unassigned',
-                                    style: GoogleFonts.outfit(
-                                      color: isDark ? Colors.white30 : AppColors.textHint,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            ...helpdeskList.map((e) {
-                              return Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      e['name'] ?? 'No Name',
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }),
-                          ];
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            selectedHelpdeskId = value;
-                            if (value == null) {
-                              selectedHelpdeskName = null;
-                            } else {
-                              final agent = helpdeskList.firstWhere(
-                                (e) => e['id']?.toString() == value,
-                                orElse: () => <String, dynamic>{},
-                              );
-                              selectedHelpdeskName = agent['name']?.toString();
-                            }
-                          });
-                        },
-                      )
-                    else
-                      // If Helpdesk, show static assigned info box styled like input field
-                      Container(
-                        width: double.infinity,
-                        height: 43,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.surface2Dark : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                            width: 1,
-                          ),
-                        ),
-                        alignment: Alignment.centerLeft,
+                  ),
+                ),
+                ...helpdeskList.map((e) {
+                  return DropdownMenuItem<String?>(
+                    value: e['id']?.toString(),
+                    child: Text(
+                      e['name'] ?? 'No Name',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  );
+                }),
+              ],
+              selectedItemBuilder: (BuildContext context) {
+                return [
+                  Row(
+                    children: [
+                      Expanded(
                         child: Text(
-                          selectedHelpdeskName ?? 'Unassigned',
-                          style: GoogleFonts.outfit(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : AppColors.textSecondary,
+                          'Unassigned',
+                          style: GoogleFonts.poppins(
+                            color: isDark ? Colors.white30 : AppColors.textHint,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
                       ),
-                  ],
+                    ],
+                  ),
+                  ...helpdeskList.map((e) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            e['name'] ?? 'No Name',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ];
+              },
+              onChanged: (value) {
+                setState(() {
+                  selectedHelpdeskId = value;
+                  if (value == null) {
+                    selectedHelpdeskName = null;
+                  } else {
+                    final agent = helpdeskList.firstWhere(
+                      (e) => e['id']?.toString() == value,
+                      orElse: () => <String, dynamic>{},
+                    );
+                    selectedHelpdeskName = agent['name']?.toString();
+                    // Set status automatically to "On Progress" when helpdesk is assigned
+                    selectedStatus = "On Progress";
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+
+            // Save Changes Button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: isSaving ? null : _saveChanges,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        "Simpan perubahan",
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (role == "helpdesk") {
+      final bool isAssignedToMe = selectedHelpdeskId == currentUserId;
+      final bool isOnProgress = ['on progress', 'on_progress', 'process', 'in progress', 'in_progress'].contains(selectedStatus.toLowerCase());
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Kelola Tiket (Helpdesk)",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            if (isAssignedToMe && isOnProgress) ...[
+              Text(
+                "Anda ditugaskan untuk menangani tiket ini. Klik tombol di bawah jika pengerjaan telah selesai.",
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: isDark ? Colors.white70 : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: isSaving 
+                      ? null 
+                      : () async {
+                          setState(() {
+                            selectedStatus = "Closed";
+                          });
+                          await _saveChanges();
+                        },
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.statusClosed,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  label: Text(
+                    "Selesai / Finish",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ] else if (isAssignedToMe) ...[
+              Text(
+                "Tiket ini ditugaskan ke Anda. Status saat ini: $selectedStatus.",
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: isDark ? Colors.white70 : AppColors.textSecondary,
+                ),
+              ),
+            ] else ...[
+              Text(
+                "Tiket ini ditugaskan ke: ${selectedHelpdeskName ?? 'Belum ada agen'}.",
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: isDark ? Colors.white70 : AppColors.textSecondary,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 20),
+          ],
+        ),
+      );
+    }
 
-          // 3. Save Changes Button
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: isSaving ? null : _saveChanges,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(
-                      "Simpan perubahan",
-                      style: GoogleFonts.outfit(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   bool _isPdf(String url) {
@@ -1149,7 +1248,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         children: [
           Text(
             "Lampiran",
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : AppColors.textPrimary,
@@ -1190,7 +1289,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                   Text(
                     "Tidak ada lampiran",
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white70 : AppColors.textPrimary,
@@ -1241,7 +1340,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                   Expanded(
                     child: Text(
                       _getFileName(widget.ticket.imageUrl!),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white70 : AppColors.textPrimary,
@@ -1259,7 +1358,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           SnackBar(
                             content: Text(
                               "Membuka tautan PDF: ${_getFileName(widget.ticket.imageUrl!)}",
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
                             ),
                             backgroundColor: AppColors.blue,
                           ),
@@ -1335,7 +1434,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             children: [
               Text(
                 "Aktivitas",
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : AppColors.textPrimary,
@@ -1352,7 +1451,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 ),
                 child: Text(
                   "$totalActivity total",
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
@@ -1407,7 +1506,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.poppins(
             fontSize: 13,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             color: isActive
@@ -1435,7 +1534,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           padding: const EdgeInsets.symmetric(vertical: 24),
           child: Text(
             "Belum ada riwayat aktivitas",
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 13,
               color: isDark ? const Color(0xFF64748B) : AppColors.textSecondary,
             ),
@@ -1505,7 +1604,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           children: [
                             Text(
                               event.title,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: isDark ? Colors.white : AppColors.textPrimary),
@@ -1514,7 +1613,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 event.description,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.poppins(
                                   fontSize: 11.5,
                                   color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                                 ),
@@ -1525,7 +1624,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                               children: [
                                 Text(
                                   _formatTanggal(event.timestamp),
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.poppins(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w500,
                                     color: isDark ? Colors.white30 : AppColors.textHint,
@@ -1534,7 +1633,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   _formatJam(event.timestamp),
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.poppins(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w500,
                                     color: isDark ? Colors.white30 : AppColors.textHint,
@@ -1568,7 +1667,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                       _isTimelineExpanded 
                           ? "Sembunyikan aktivitas"
                           : "+${events.length - 2} aktivitas lainnya...",
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: AppColors.blue,
@@ -1693,7 +1792,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             const SizedBox(height: 8),
             Text(
               "No replies yet",
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white54 : AppColors.textSecondary,
@@ -1702,7 +1801,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             const SizedBox(height: 4),
             Text(
               "Send a message below to start the conversation.",
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 color: isDark ? Colors.white24 : AppColors.textHint,
               ),
@@ -1764,7 +1863,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               child: Center(
                 child: Text(
                   initial,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: roleColor,
@@ -1787,7 +1886,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                       ? [
                           Text(
                             senderEmail,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white30 : AppColors.textHint,
@@ -1801,7 +1900,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           const SizedBox(width: 6),
                           Text(
                             senderEmail,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white30 : AppColors.textHint,
@@ -1832,7 +1931,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                   ),
                   child: Text(
                     comment.message,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       fontSize: 13,
                       height: 1.4,
                       color: isCurrentUser
@@ -1846,7 +1945,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 // Timestamp
                 Text(
                   _formatTimelineTime(comment.createdAt),
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 9.5,
                     color: isDark ? Colors.white30 : AppColors.textHint,
                   ),
@@ -1869,7 +1968,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               child: Center(
                 child: Text(
                   initial,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: roleColor,
@@ -1897,7 +1996,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       ),
       child: Text(
         role.toUpperCase(),
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.poppins(
           fontSize: 8.5,
           fontWeight: FontWeight.w800,
           color: roleColor,
@@ -1964,13 +2063,13 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
                 controller: commentController,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 13.5,
                   color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Tulis balasan...',
-                  hintStyle: GoogleFonts.outfit(
+                  hintStyle: GoogleFonts.poppins(
                     color: isDark ? const Color(0xFF64748B) : AppColors.textHint,
                     fontSize: 13.5,
                   ),

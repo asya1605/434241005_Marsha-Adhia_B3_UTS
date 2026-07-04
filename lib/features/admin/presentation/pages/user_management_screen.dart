@@ -73,7 +73,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ),
       child: Text(
         role.toUpperCase(),
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.bold,
           color: fg,
@@ -102,7 +102,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ),
       child: Text(
         isActive ? 'ACTIVE' : 'INACTIVE',
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.bold,
           color: fg,
@@ -135,7 +135,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         appBar: AppBar(
           title: Text(
             'Akses Ditolak',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
         ),
@@ -154,7 +154,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 Text(
                   'Hanya Administrator yang memiliki akses ke halaman ini.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white70 : Colors.black87,
@@ -210,12 +210,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 onChanged: (val) {
                   provider.setSearchQuery(val);
                 },
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   color: isDark ? Colors.white : Colors.black87,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Cari user berdasarkan nama atau role...',
-                  hintStyle: GoogleFonts.outfit(
+                  hintStyle: GoogleFonts.poppins(
                     color: isDark ? Colors.white38 : Colors.black38,
                     fontSize: 14,
                   ),
@@ -285,7 +285,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                       const SizedBox(height: 16),
                                       Text(
                                         'Tidak ada user ditemukan',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.poppins(
                                           fontSize: 16,
                                           color: isDark ? Colors.white54 : Colors.black54,
                                           fontWeight: FontWeight.w500,
@@ -352,7 +352,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                               backgroundColor: avatarColor,
                                               child: Text(
                                                 initials,
-                                                style: GoogleFonts.outfit(
+                                                style: GoogleFonts.poppins(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 18,
@@ -372,7 +372,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                                           user.name,
                                                           maxLines: 1,
                                                           overflow: TextOverflow.ellipsis,
-                                                          style: GoogleFonts.outfit(
+                                                          style: GoogleFonts.poppins(
                                                             fontSize: 16,
                                                             fontWeight: FontWeight.w600,
                                                             color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -388,7 +388,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                                   const SizedBox(height: 4),
                                                   Text(
                                                     'Dibuat pada: ${_formatDate(user.createdAt)}',
-                                                    style: GoogleFonts.outfit(
+                                                    style: GoogleFonts.poppins(
                                                       fontSize: 13,
                                                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                                                     ),

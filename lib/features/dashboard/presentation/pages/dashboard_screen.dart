@@ -177,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               },
                               child: Text(
                                 'View All',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.blue,
@@ -243,7 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 4),
             Text(
               'ADMIN',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFFFBBF24),
@@ -279,7 +279,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 4),
             Text(
               'HELPDESK',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFFA78BFA),
@@ -315,7 +315,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 4),
             Text(
               'USER',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF60A5FA),
@@ -363,7 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Center(
                   child: Text(
                     initialLetter,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -378,7 +378,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       'Welcome, $name 👋',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -390,7 +390,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 2),
                     Text(
                       panelTitle,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: Colors.white.withValues(alpha: 0.75),
                         fontWeight: FontWeight.w400,
@@ -416,7 +416,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 6),
               Text(
                 _formattedDate(),
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: Colors.white.withValues(alpha: 0.65),
                   fontWeight: FontWeight.w500,
@@ -442,7 +442,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(width: 4),
                     Text(
                       'Online',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 11,
                         color: const Color(0xFF10B981),
                         fontWeight: FontWeight.w600,
@@ -510,7 +510,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text(
                     'Create New Ticket',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -520,7 +520,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'Report an issue or request support',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       fontSize: 11.5,
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
@@ -571,7 +571,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 12),
             Text(
               role == 'helpdesk' ? 'No assigned tickets' : 'No tickets yet',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white54 : AppColors.textSecondary,
@@ -582,7 +582,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               role == 'helpdesk'
                   ? "You're completely caught up!"
                   : 'Create your first ticket to get started',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: isDark ? Colors.white24 : AppColors.textHint,
               ),
@@ -656,7 +656,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: Text(
                             ticket.title,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: isDark ? Colors.white : AppColors.textPrimary,
@@ -682,7 +682,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           child: Text(
                             ticket.status,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.poppins(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: statusColor,
@@ -694,7 +694,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 4),
                     Text(
                       ticket.description,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                       ),
@@ -723,7 +723,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Expanded(
                             child: Text(
                               'User: ${ticket.userId.toString().length > 8 ? "${ticket.userId.toString().substring(0, 8)}..." : ticket.userId}',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                                 color: isDark ? Colors.white30 : AppColors.textHint,
@@ -743,7 +743,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Expanded(
                               child: Text(
                                 ticket.assignedName ?? 'Assigned',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.poppins(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                   color: isDark ? Colors.white30 : AppColors.textHint,
@@ -767,12 +767,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Color _statusColor(String status) {
-    switch (status) {
-      case 'Open':
+    switch (status.toLowerCase()) {
+      case 'open':
         return AppColors.statusOpen;
-      case 'Pending':
+      case 'assign':
         return AppColors.statusPending;
-      case 'Closed':
+      case 'on progress':
+      case 'on_progress':
+      case 'in progress':
+      case 'in_progress':
+      case 'process':
+        return AppColors.statusProcess;
+      case 'closed':
+      case 'close':
+      case 'done':
         return AppColors.statusClosed;
       default:
         return AppColors.textHint;
@@ -814,7 +822,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : AppColors.textPrimary,

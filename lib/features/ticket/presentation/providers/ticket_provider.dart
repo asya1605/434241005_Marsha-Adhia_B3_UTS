@@ -85,4 +85,13 @@ class TicketProvider extends ChangeNotifier {
   Future<TicketModel?> getTicketById(String id) async {
     return await _repository.getTicketById(id);
   }
+
+  /// CLEAR CACHED DATA
+  void clear() {
+    tickets = [];
+    isInitialLoading = false;
+    isRefreshing = false;
+    currentRole = "user";
+    notifyListeners();
+  }
 }

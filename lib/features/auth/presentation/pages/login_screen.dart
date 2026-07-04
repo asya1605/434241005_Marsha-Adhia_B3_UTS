@@ -28,41 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Widget _buildBackButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(20),
-      ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
-            SizedBox(width: 6),
-            Text(
-              'Back',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildInputField({
     required String label,
@@ -273,12 +238,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.white.withValues(alpha: isDark ? 0.03 : 0.06),
                         ),
                       ),
-                    ),
-                    // Back Button Pill
-                    Positioned(
-                      top: MediaQuery.of(context).padding.top + 16,
-                      left: 20,
-                      child: _buildBackButton(context),
                     ),
                   ],
                 ),

@@ -63,7 +63,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       ),
       child: Text(
         role.toUpperCase(),
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.poppins(
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: fg,
@@ -92,7 +92,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       ),
       child: Text(
         isActive ? 'ACTIVE' : 'INACTIVE',
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.poppins(
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: fg,
@@ -155,7 +155,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.white38 : Colors.black38,
@@ -164,7 +164,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -203,14 +203,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             'Konfirmasi $actionName',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
           content: Text(
             'Apakah Anda yakin ingin melakukan $actionName pada user ini?',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               color: isDark ? Colors.white70 : Colors.black87,
             ),
           ),
@@ -219,7 +219,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               onPressed: () => Navigator.pop(dialogContext, false),
               child: Text(
                 'Batal',
-                style: GoogleFonts.outfit(color: Colors.grey),
+                style: GoogleFonts.poppins(color: Colors.grey),
               ),
             ),
             ElevatedButton(
@@ -231,7 +231,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ),
               child: Text(
                 activate ? 'Aktifkan' : 'Nonaktifkan',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -251,7 +251,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         SnackBar(
           content: Text(
             'User berhasil ${activate ? 'diaktifkan' : 'dinonaktifkan'}',
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.poppins(),
           ),
           backgroundColor: Colors.green,
         ),
@@ -261,7 +261,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         SnackBar(
           content: Text(
             e.toString().replaceAll('Exception: ', ''),
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.poppins(),
           ),
           backgroundColor: Colors.red,
         ),
@@ -335,7 +335,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     backgroundColor: avatarColor,
                     child: Text(
                       initials,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 36,
@@ -346,7 +346,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   Text(
                     currentUserData.name,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -372,7 +372,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 children: [
                   Text(
                     'Informasi Profil',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white70 : Colors.black87,
@@ -410,14 +410,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     child: DropdownButtonFormField<String>(
                       initialValue: currentUserData.role.toLowerCase(),
                       dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                       decoration: InputDecoration(
                         labelText: 'ROLE / PERAN',
-                        labelStyle: GoogleFonts.outfit(
+                        labelStyle: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: isDark ? Colors.white38 : Colors.black38,
@@ -434,7 +434,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           value: role,
                           child: Text(
                             role.toUpperCase(),
-                            style: GoogleFonts.outfit(),
+                            style: GoogleFonts.poppins(),
                           ),
                         );
                       }).toList(),
@@ -452,7 +452,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                     SnackBar(
                                       content: Text(
                                         'Role berhasil diubah menjadi ${newRole.toUpperCase()}',
-                                        style: GoogleFonts.outfit(),
+                                        style: GoogleFonts.poppins(),
                                       ),
                                       backgroundColor: Colors.green,
                                     ),
@@ -462,7 +462,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                     SnackBar(
                                       content: Text(
                                         e.toString().replaceAll('Exception: ', ''),
-                                        style: GoogleFonts.outfit(),
+                                        style: GoogleFonts.poppins(),
                                       ),
                                       backgroundColor: Colors.red,
                                     ),
@@ -489,7 +489,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         SnackBar(
                           content: Text(
                             'User ID disalin ke clipboard',
-                            style: GoogleFonts.outfit(),
+                            style: GoogleFonts.poppins(),
                           ),
                           behavior: SnackBarBehavior.floating,
                         ),
@@ -517,7 +517,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           Expanded(
                             child: Text(
                               'Anda tidak dapat menonaktifkan akun Anda sendiri.',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.red[200] : const Color(0xFF991B1B),
@@ -552,7 +552,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             : Icon(currentUserData.isActive ? Icons.block_flipped : Icons.check_circle_outline_rounded),
                         label: Text(
                           currentUserData.isActive ? 'Nonaktifkan User' : 'Aktifkan User',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),

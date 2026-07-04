@@ -9,6 +9,7 @@ class TicketHistoryProvider extends ChangeNotifier {
   bool isLoading = false;
 
   Future<void> loadHistory(String ticketId) async {
+    history = [];
     isLoading = true;
     notifyListeners();
 

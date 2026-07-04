@@ -103,7 +103,7 @@ class _NotificationTileState extends State<NotificationTile> {
           SnackBar(
             content: Text(
               'Tiket sudah tidak tersedia atau telah dihapus.',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
             ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
@@ -117,7 +117,7 @@ class _NotificationTileState extends State<NotificationTile> {
           SnackBar(
             content: Text(
               'Gagal memuat detail tiket: $e',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
             ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
@@ -227,7 +227,7 @@ class _NotificationTileState extends State<NotificationTile> {
                         Expanded(
                           child: Text(
                             widget.notification.title,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.poppins(
                               fontSize: 14.5,
                               fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
                               color: isDark ? Colors.white : const Color(0xFF1E293B),
@@ -257,7 +257,7 @@ class _NotificationTileState extends State<NotificationTile> {
                     /// Message
                     Text(
                       widget.notification.message,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 13,
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         height: 1.4,
@@ -274,7 +274,7 @@ class _NotificationTileState extends State<NotificationTile> {
                       children: [
                         Text(
                           _formatTime(widget.notification.createdAt),
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
                             color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
@@ -287,7 +287,7 @@ class _NotificationTileState extends State<NotificationTile> {
                             children: [
                               Text(
                                 'Buka Tiket',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.poppins(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: color,

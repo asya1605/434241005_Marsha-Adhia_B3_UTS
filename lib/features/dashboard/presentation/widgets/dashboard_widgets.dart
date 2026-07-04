@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_design_tokens.dart';
 import '../../../ticket/data/models/ticket_model.dart';
 import '../../../notification/data/models/notification_model.dart';
@@ -225,7 +226,7 @@ class SectionHeader extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
                   linkText!,
-                  style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -1368,5 +1369,1191 @@ class _ActivityTimelineCardState extends State<ActivityTimelineCard>
     } else {
       return content;
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODERN REDESIGNED DASHBOARD WIDGETS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class ModernDashboardHeader extends StatelessWidget {
+  final String name;
+  final String subtitle;
+  final String? profileImageUrl;
+  final VoidCallback onNotificationTap;
+  final bool hasUnreadNotifications;
+
+  const ModernDashboardHeader({
+    super.key,
+    required this.name,
+    required this.subtitle,
+    this.profileImageUrl,
+    required this.onNotificationTap,
+    this.hasUnreadNotifications = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          // Profile picture
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: isDark ? const Color(0xFF2E1E4E) : const Color(0xFFEBE8FC),
+            backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : null,
+            child: profileImageUrl == null
+                ? Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: primaryColor,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+          // User Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hi, $name',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF1F1F1F),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF757575),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AiAssistantBanner extends StatelessWidget {
+  const AiAssistantBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          margin: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [colorScheme.primary.withOpacity(0.85), colorScheme.secondary.withOpacity(0.85)]
+                  : [colorScheme.primary, colorScheme.secondary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                top: -20,
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AI Assistant',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Use AI assistant to help you, translate automatically, answer questions, etc.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white.withOpacity(0.9),
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => const AiChatBottomSheet(),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: colorScheme.primary,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(
+                              'Access Now',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 40,
+                            color: Colors.white.withOpacity(0.95),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 14,
+              height: 5,
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                borderRadius: BorderRadius.circular(2.5),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+class AiChatBottomSheet extends StatefulWidget {
+  const AiChatBottomSheet({super.key});
+
+  @override
+  State<AiChatBottomSheet> createState() => _AiChatBottomSheetState();
+}
+
+class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
+  final List<Map<String, dynamic>> _messages = [
+    {
+      'text': 'Hello! I am your AI Assistant. How can I help you with your helpdesk tickets today?',
+      'isUser': false,
+    }
+  ];
+
+  final TextEditingController _controller = TextEditingController();
+  bool _isTyping = false;
+
+  void _sendMessage() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add({'text': text, 'isUser': true});
+      _controller.clear();
+      _isTyping = true;
+    });
+
+    // Simulate AI response after 1.5 seconds
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      
+      String aiResponse = "I am analyzing your tickets now... All systems are operational. Let me know if you need help with anything specific!";
+      final lowerText = text.toLowerCase();
+      
+      if (lowerText.contains('halo') || lowerText.contains('hi') || lowerText.contains('hello')) {
+        aiResponse = "Halo! Adakah tiket tertentu yang ingin Anda tanyakan atau ringkas?";
+      } else if (lowerText.contains('tiket') || lowerText.contains('status') || lowerText.contains('ticket')) {
+        aiResponse = "Berdasarkan database, terdapat beberapa tiket aktif. Anda dapat memfilternya menggunakan tab status di dashboard.";
+      } else if (lowerText.contains('tolong') || lowerText.contains('bantu') || lowerText.contains('help')) {
+        aiResponse = "Tentu! Saya bisa menerjemahkan keluhan user, merangkum diskusi tiket, atau memberi rekomendasi penyelesaian.";
+      }
+
+      setState(() {
+        _isTyping = false;
+        _messages.add({'text': aiResponse, 'isUser': false});
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final viewInsets = MediaQuery.of(context).viewInsets;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F1117) : Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
+      ),
+      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white24 : Colors.black12,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded, color: colorScheme.primary),
+                const SizedBox(width: 10),
+                Text(
+                  'Helpdesk AI Assistant',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF1F1F1F),
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: _messages.length + (_isTyping ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == _messages.length) {
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        'AI is typing...',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: isDark ? Colors.white70 : colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final msg = _messages[index];
+                final isUser = msg['isUser'] as bool;
+                return Align(
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.75,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? colorScheme.primary
+                          : (isDark ? const Color(0xFF1E293B) : colorScheme.primary.withValues(alpha: 0.08)),
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(16),
+                        topRight: const Radius.circular(16),
+                        bottomLeft: Radius.circular(isUser ? 16 : 4),
+                        bottomRight: Radius.circular(isUser ? 4 : 16),
+                      ),
+                    ),
+                    child: Text(
+                      msg['text'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: isUser
+                            ? Colors.white
+                            : (isDark ? Colors.white : const Color(0xFF1F1F1F)),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    onSubmitted: (_) => _sendMessage(),
+                    decoration: InputDecoration(
+                      hintText: 'Tanyakan sesuatu...',
+                      hintStyle: GoogleFonts.poppins(fontSize: 14),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFEBEBEB),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFEBEBEB),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                CircleAvatar(
+                  backgroundColor: colorScheme.primary,
+                  radius: 22,
+                  child: IconButton(
+                    onPressed: _sendMessage,
+                    icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StatusFilterTabs extends StatelessWidget {
+  final String activeTab;
+  final Function(String) onTabChanged;
+
+  const StatusFilterTabs({
+    super.key,
+    required this.activeTab,
+    required this.onTabChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tabs = ['Open', 'Assign', 'On Progress', 'Closed'];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 48,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        itemCount: tabs.length,
+        itemBuilder: (context, index) {
+          final tab = tabs[index];
+          final isActive = tab == activeTab;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: InkWell(
+              onTap: () => onTabChanged(tab),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? (isDark ? colorScheme.primary.withOpacity(0.15) : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isActive
+                        ? colorScheme.primary
+                        : (isDark ? const Color(0xFF334155) : const Color(0xFFEBEBEB)),
+                    width: 1.2,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    tab,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      color: isActive
+                          ? colorScheme.primary
+                          : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF757575)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ModernTicketCard extends StatefulWidget {
+  final TicketModel ticket;
+  final String role;
+  final VoidCallback onTap;
+  final VoidCallback onActionTap;
+
+  const ModernTicketCard({
+    super.key,
+    required this.ticket,
+    required this.role,
+    required this.onTap,
+    required this.onActionTap,
+  });
+
+  @override
+  State<ModernTicketCard> createState() => _ModernTicketCardState();
+}
+
+class _ModernTicketCardState extends State<ModernTicketCard> {
+  bool _isExpanded = false;
+
+  String _timeAgo(DateTime dateTime) {
+    final duration = DateTime.now().difference(dateTime);
+    if (duration.inDays > 0) {
+      return '${duration.inDays} hari lalu';
+    } else if (duration.inHours > 0) {
+      return '${duration.inHours} jam lalu';
+    } else if (duration.inMinutes > 0) {
+      return '${duration.inMinutes} menit lalu';
+    } else {
+      return 'Baru saja';
+    }
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  Color _getPriorityBg(String priority, bool isDark) {
+    if (isDark) {
+      switch (priority.toLowerCase()) {
+        case 'high':
+          return const Color(0xFF3E1F21);
+        case 'medium':
+        case 'warning':
+          return const Color(0xFF3E2D1F);
+        default:
+          return const Color(0xFF1F3A3E);
+      }
+    } else {
+      switch (priority.toLowerCase()) {
+        case 'high':
+          return const Color(0xFFFFEBEE);
+        case 'medium':
+        case 'warning':
+          return const Color(0xFFFFF3E0);
+        default:
+          return const Color(0xFFE0F7FA);
+      }
+    }
+  }
+
+  Color _getPriorityText(String priority, bool isDark) {
+    if (isDark) {
+      switch (priority.toLowerCase()) {
+        case 'high':
+          return const Color(0xFFFF8A80);
+        case 'medium':
+        case 'warning':
+          return const Color(0xFFFFB74D);
+        default:
+          return const Color(0xFF4DD0E1);
+      }
+    } else {
+      switch (priority.toLowerCase()) {
+        case 'high':
+          return const Color(0xFFC62828);
+        case 'medium':
+        case 'warning':
+          return const Color(0xFFE65100);
+        default:
+          return const Color(0xFF006064);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    final String tagText;
+    final String tagInitial;
+    if (widget.role == 'user') {
+      tagText = widget.ticket.assignedName ?? 'Unassigned Agent';
+      tagInitial = tagText.isNotEmpty ? tagText[0].toUpperCase() : 'A';
+    } else {
+      tagText = widget.ticket.creatorName ?? 'User';
+      tagInitial = tagText.isNotEmpty ? tagText[0].toUpperCase() : 'U';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFF1EFFC),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.05 : 0.02),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9F9FB),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFEBEBEB),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 10,
+                          backgroundColor: widget.ticket.assignedTo != null 
+                              ? colorScheme.primary 
+                              : const Color(0xFF757575),
+                          child: Text(
+                            tagInitial,
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          tagText,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : const Color(0xFF424242),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isExpanded = !_isExpanded;
+                      });
+                    },
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9F9FB),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFEBEBEB),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: isDark ? Colors.white70 : const Color(0xFF424242),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              Text(
+                widget.ticket.title,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF1F1F1F),
+                ),
+              ),
+              const SizedBox(height: 4),
+              
+              Text(
+                widget.ticket.description,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF757575),
+                ),
+                maxLines: _isExpanded ? null : 1,
+                overflow: _isExpanded ? null : TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2D1E2D) : const Color(0xFFFFEBEE),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 11,
+                          color: isDark ? Colors.redAccent : const Color(0xFFC62828),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _timeAgo(widget.ticket.createdAt),
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.redAccent : const Color(0xFFC62828),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getPriorityBg(widget.ticket.priority, isDark),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Prioritas : ${_capitalize(widget.ticket.priority)}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _getPriorityText(widget.ticket.priority, isDark),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(
+                    width: 70,
+                    height: 28,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 0,
+                          child: CircleAvatar(
+                            radius: 13,
+                            backgroundColor: const Color(0xFF2196F3),
+                            child: Text(
+                              widget.ticket.creatorName != null && widget.ticket.creatorName!.isNotEmpty 
+                                  ? widget.ticket.creatorName![0].toUpperCase() 
+                                  : 'U',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        if (widget.ticket.assignedTo != null)
+                          Positioned(
+                            left: 18,
+                            child: CircleAvatar(
+                              radius: 13,
+                              backgroundColor: const Color(0xFF4CAF50),
+                              child: Text(
+                                widget.ticket.assignedName != null && widget.ticket.assignedName!.isNotEmpty 
+                                    ? widget.ticket.assignedName![0].toUpperCase() 
+                                    : 'A',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          left: widget.ticket.assignedTo != null ? 36 : 18,
+                          child: CircleAvatar(
+                            radius: 13,
+                            backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFEBEBEB),
+                            child: Text(
+                              widget.ticket.assignedTo != null ? '+1' : '+0',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white70 : const Color(0xFF757575),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: widget.onActionTap,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CategorySelector extends StatelessWidget {
+  final Function(String) onCategoryTap;
+
+  const CategorySelector({
+    super.key,
+    required this.onCategoryTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final categories = [
+      {
+        'label': 'Jaringan',
+        'value': 'Network',
+        'icon': Icons.wifi_rounded,
+        'bgColor': isDark ? const Color(0xFF1E293B) : const Color(0xFFEBF6FF),
+        'iconColor': const Color(0xFF2B9FF0),
+      },
+      {
+        'label': 'Hardware',
+        'value': 'Hardware',
+        'icon': Icons.laptop_mac_rounded,
+        'bgColor': isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF3E0),
+        'iconColor': const Color(0xFFF59E0B),
+      },
+      {
+        'label': 'Software',
+        'value': 'Software',
+        'icon': Icons.code_rounded,
+        'bgColor': isDark ? const Color(0xFF1E293B) : const Color(0xFFFFEBEE),
+        'iconColor': const Color(0xFFEF4444),
+      },
+      {
+        'label': 'Umum',
+        'value': 'General',
+        'icon': Icons.more_horiz_rounded,
+        'bgColor': isDark ? const Color(0xFF1E293B) : const Color(0xFFE3F5EC),
+        'iconColor': const Color(0xFF1F9D63),
+      },
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Layanan IT',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: categories.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 2.3,
+            ),
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              return Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                    width: 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.05 : 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: () => onCategoryTap(cat['value'] as String),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: cat['bgColor'] as Color,
+                          child: Icon(
+                            cat['icon'] as IconData,
+                            color: cat['iconColor'] as Color,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            cat['label'] as String,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white70 : const Color(0xFF424242),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. WAVE CLIPPER AND WAVE DASHBOARD HEADER (MOCKUP STYLED)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 24);
+    
+    // Smooth custom wave curve matching mockup
+    final firstControlPoint = Offset(size.width * 0.25, size.height);
+    final firstEndPoint = Offset(size.width * 0.5, size.height - 10);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+    
+    final secondControlPoint = Offset(size.width * 0.75, size.height - 40);
+    final secondEndPoint = Offset(size.width, size.height - 25);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+    
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class WaveDashboardHeader extends StatelessWidget {
+  final String name;
+  final String subtitle;
+  final TextEditingController searchController;
+
+  const WaveDashboardHeader({
+    super.key,
+    required this.name,
+    required this.subtitle,
+    required this.searchController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return ClipPath(
+      clipper: WaveClipper(),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 44),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                : [const Color(0xFF1565D8), const Color(0xFF2B9FF0)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Row 1: Profile Details
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Hello, $name',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text('👋', style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 12, color: Colors.white70),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              subtitle,
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white70,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Search Bar (Takes full width)
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: isDark ? Border.all(color: const Color(0xFF334155), width: 1.0) : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: searchController,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search tickets...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: isDark ? Colors.white38 : Colors.black38,
+                  ),
+                  prefixIcon: Icon(Icons.search, color: isDark ? Colors.white38 : Colors.black38, size: 20),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -45,7 +45,11 @@ class AuthProvider extends ChangeNotifier {
         final isActive = profile['is_active'] as bool? ?? true;
         if (!isActive) {
           // Immediately sign out
-          await Supabase.instance.client.auth.signOut();
+          try {
+            await Supabase.instance.client.auth.signOut();
+          } catch (e) {
+            debugPrint("Deactivated account sign out error: $e");
+          }
           loginError = "Account has been deactivated. Please contact administrator.";
           isLoading = false;
           notifyListeners();
@@ -164,7 +168,11 @@ class AuthProvider extends ChangeNotifier {
 
         final isActive = profile['is_active'] as bool? ?? true;
         if (!isActive) {
-          await Supabase.instance.client.auth.signOut();
+          try {
+            await Supabase.instance.client.auth.signOut();
+          } catch (e) {
+            debugPrint("Deactivated account sign out error: $e");
+          }
           await prefs.clear();
           isLoggedIn = false;
           userId = null;
@@ -207,7 +215,11 @@ class AuthProvider extends ChangeNotifier {
 
   /// LOGOUT
   Future<void> logout() async {
-    await Supabase.instance.client.auth.signOut();
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e) {
+      debugPrint("Logout sign out error: $e");
+    }
 
     final prefs = await SharedPreferences.getInstance();
 
