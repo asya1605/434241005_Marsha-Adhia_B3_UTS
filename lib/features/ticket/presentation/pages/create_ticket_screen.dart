@@ -227,7 +227,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   _FieldLabel(label: 'Category', isDark: isDark),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    initialValue: selectedCategory,
+                    value: selectedCategory,
                     dropdownColor: Theme.of(context).cardTheme.color,
                     style: TextStyle(
                       fontSize: 14,
@@ -300,7 +300,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   _FieldLabel(label: 'Priority', isDark: isDark),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    initialValue: selectedPriority,
+                    value: selectedPriority,
                     dropdownColor: Theme.of(context).cardTheme.color,
                     style: TextStyle(
                       fontSize: 14,

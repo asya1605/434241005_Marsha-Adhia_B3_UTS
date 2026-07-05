@@ -50,14 +50,27 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   int _activeTab = 0; // 0 = Riwayat status, 1 = Diskusi
   bool _isTimelineExpanded = false;
 
+  String _normalizeStatusForDropdown(String status) {
+    final s = status.toLowerCase();
+    if (s == 'open') return 'Open';
+    if (s == 'assign') return 'Assign';
+    if (['process', 'pending', 'in_progress', 'diproses', 'on progress', 'on_progress', 'in progress'].contains(s)) {
+      return 'On Progress';
+    }
+    if (['closed', 'done', 'resolved', 'close'].contains(s)) {
+      return 'Closed';
+    }
+    return 'Open';
+  }
+
   @override
   void initState() {
     super.initState();
     _ticketHistoryProvider = context.read<TicketHistoryProvider>();
-    selectedStatus = widget.ticket.status;
+    selectedStatus = _normalizeStatusForDropdown(widget.ticket.status);
     selectedHelpdeskId = widget.ticket.assignedTo;
     selectedHelpdeskName = widget.ticket.assignedName;
-    _savedStatus = widget.ticket.status;
+    _savedStatus = _normalizeStatusForDropdown(widget.ticket.status);
     _savedHelpdeskId = widget.ticket.assignedTo;
 
     // Load initial metadata asynchronously
@@ -849,8 +862,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     
     final bool isClosed = ['closed', 'done', 'close'].contains(selectedStatus.toLowerCase());
     
-    // If ticket is closed, show read-only card with completed banner
-    if (isClosed) {
+    // If ticket is closed, show read-only card with completed banner (except for admin)
+    if (isClosed && role != "admin") {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
@@ -900,7 +913,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
     // If ticket is not closed:
     if (role == "admin") {
-      final bool isOpen = selectedStatus.toLowerCase() == 'open';
+      final List<String> statusDropdownList = ["Open", "Assign", "On Progress", "Closed"];
+      final String normalizedSelected = statusDropdownList.contains(selectedStatus) ? selectedStatus : "Open";
 
       return Container(
         width: double.infinity,
@@ -926,40 +940,66 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             ),
             const SizedBox(height: 16),
 
-            // If status is Open, show option to accept/receive ticket
-            if (isOpen) ...[
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton.icon(
-                  onPressed: isSaving 
-                      ? null 
-                      : () async {
-                          setState(() {
-                            selectedStatus = "Assign";
-                          });
-                          await _saveChanges();
-                        },
-                  icon: const Icon(Icons.assignment_turned_in_rounded, size: 18),
-                  label: Text(
-                    "Terima Tiket (Ubah Status ke Assign)",
-                    style: GoogleFonts.poppins(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                    ),
+            // Dropdown Status
+            Text(
+              "Status Tiket",
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              value: normalizedSelected,
+              dropdownColor: isDark ? AppColors.surfaceDark : Colors.white,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: isDark ? AppColors.surface2Dark : const Color(0xFFF8FAFC),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    width: 1,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.statusPending, // Purple for Assign
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.blue,
+                    width: 1.5,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    width: 1,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
+              items: statusDropdownList.map((status) {
+                return DropdownMenuItem<String>(
+                  value: status,
+                  child: Text(status),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    selectedStatus = value;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16),
 
             // Dropdown to assign agent
             Text(
@@ -973,7 +1013,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             const SizedBox(height: 6),
             DropdownButtonFormField<String?>(
               isExpanded: true,
-              initialValue: (selectedHelpdeskId == null || !helpdeskList.any((e) => e['id']?.toString() == selectedHelpdeskId))
+              value: (selectedHelpdeskId == null || !helpdeskList.any((e) => e['id']?.toString() == selectedHelpdeskId))
                   ? null
                   : selectedHelpdeskId,
               dropdownColor: isDark ? AppColors.surfaceDark : Colors.white,
@@ -1077,7 +1117,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                     );
                     selectedHelpdeskName = agent['name']?.toString();
                     // Set status automatically to "On Progress" when helpdesk is assigned
-                    selectedStatus = "On Progress";
+                    if (selectedStatus == "Open" || selectedStatus == "Assign") {
+                      selectedStatus = "On Progress";
+                    }
                   }
                 });
               },

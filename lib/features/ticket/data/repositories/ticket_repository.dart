@@ -178,7 +178,7 @@ class TicketRepository {
 
     final helpdesk = data.where((e) {
       final role = (e['role'] ?? '').toString().toLowerCase().trim();
-      return role == 'helpdesk';
+      return role == 'helpdesk' || role == 'admin';
     }).toList();
 
     return helpdesk.map((e) {

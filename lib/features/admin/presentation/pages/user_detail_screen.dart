@@ -408,7 +408,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       ),
                     ),
                     child: DropdownButtonFormField<String>(
-                      initialValue: currentUserData.role.toLowerCase(),
+                      value: currentUserData.role.toLowerCase(),
                       dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                       style: GoogleFonts.poppins(
                         fontSize: 15,
