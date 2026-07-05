@@ -10,10 +10,14 @@ class AuthRepository {
     );
   }
 
-  Future<AuthResponse> register(String email, String password) async {
+  Future<AuthResponse> register(String email, String password, String name) async {
     final res = await _supabase.auth.signUp(
       email: email,
       password: password,
+      data: {
+        'display_name': name,
+        'name': name,
+      },
     );
 
     print("SIGNUP USER: ${res.user}");

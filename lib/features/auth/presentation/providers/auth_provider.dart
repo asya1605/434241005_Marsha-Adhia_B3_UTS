@@ -96,12 +96,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// REGISTER
-  Future<bool> register(String email, String password) async {
+  Future<bool> register(String email, String password, String name) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final res = await _repository.register(email, password);
+      final res = await _repository.register(email, password, name);
 
       isLoading = false;
       notifyListeners();

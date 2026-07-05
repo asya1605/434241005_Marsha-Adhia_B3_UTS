@@ -56,12 +56,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => isLoading = true);
 
     try {
-      await context.read<AuthProvider>().register(email, password);
+      await context.read<AuthProvider>().register(email, password, name);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Register berhasil! Silahkan cek email (jika konfirmasi ON)"),
+            content: Text("Register berhasil! Silahkan Sign In"),
             backgroundColor: Colors.green,
           ),
         );
