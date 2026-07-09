@@ -862,8 +862,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     
     final bool isClosed = ['closed', 'done', 'close'].contains(selectedStatus.toLowerCase());
     
-    // If ticket is closed, show read-only card with completed banner (except for admin)
-    if (isClosed && role != "admin") {
+    // If ticket is closed, show read-only card with completed banner
+    if (isClosed) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
