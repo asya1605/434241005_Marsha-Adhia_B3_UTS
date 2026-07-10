@@ -20,7 +20,12 @@ import 'features/profile/presentation/providers/settings_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  /// INIT SUPABASE
+  // 1. CARA KONEKSI KE DATABASE / API:
+  // Kita menginisialisasi Supabase menggunakan package `supabase_flutter`.
+  // - Database yang digunakan: Supabase (PostgreSQL database di cloud).
+  // - URL API (Endpoint): https://htjkrrsmdusxwfdvcxgt.supabase.co (Tempat API kita berada di cloud).
+  // - Anon Key: Kunci publik yang aman untuk melakukan request API.
+  // Method `Supabase.initialize` ini dijalankan sekali saat aplikasi pertama kali dibuka (dalam fungsi main).
   await Supabase.initialize(
     url: 'https://htjkrrsmdusxwfdvcxgt.supabase.co', 
     anonKey: 'sb_publishable_IBnKnq1-hnt_cssP517eAw_0_fnwMCw', 
@@ -29,7 +34,8 @@ Future<void> main() async {
     ),
   );
 
-  // Check user session
+  // 2. CHECK SESSION:
+  // Mengecek apakah ada user yang sedang login di sesi aktif saat aplikasi dijalankan.
   print("USER: ${Supabase.instance.client.auth.currentUser?.email}"); 
      
   runApp(

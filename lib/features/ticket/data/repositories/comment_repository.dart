@@ -3,10 +3,16 @@ import 'package:flutter/foundation.dart';
 import '../models/comment_model.dart';
 import '../../../notification/data/repositories/notification_repository.dart';
 
+// COMMENT REPOSITORY:
+// Mengelola percakapan/komentar di dalam detail tiket (membaca komentar dan menambahkan komentar baru).
 class CommentRepository {
+  // Mengambil instance client dari Supabase untuk melakukan query database.
   final supabase = Supabase.instance.client;
 
-  // GET COMMENTS BY TICKET
+  // 1. FUNGSI AMBIL KOMENTAR (GET COMMENTS BY TICKET):
+  // Cara nembak API:
+  // - Memanggil `supabase.from('comments').select().eq('ticket_id', ticketId)` untuk mengambil semua baris komentar yang berasosiasi dengan id tiket ini.
+  // - Mengurutkan komentar dari yang terlama ke terbaru dengan `.order('created_at', ascending: true)`.
   Future<List<Comment>> getComments(String ticketId) async {
     final response = await supabase
         .from('comments')
@@ -19,7 +25,13 @@ class CommentRepository {
         .toList();
   }
 
-  // ADD COMMENT
+  // 2. FUNGSI TAMBAH KOMENTAR BARU (ADD COMMENT):
+  // Cara nembak API:
+  // - Mengambil user ID saat ini dari Auth session.
+  // - Memasukkan data komentar baru (ticket_id, user_id, message, role) ke tabel `comments` menggunakan `.insert({...})`.
+  // - Opsional: Mengambil detail tiket untuk mengetahui siapa pembuat tiket (`user_id`) dan siapa yang ditugaskan (`assigned_to`).
+  // - Jika pengirim adalah user biasa, maka sistem akan mengirim notifikasi baru ke staf yang ditugaskan (assignedTo) melalui tabel `notifications`.
+  // - Jika pengirim adalah staf helpdesk/admin, maka sistem akan mengirim notifikasi baru ke user pembuat tiket (ownerId) melalui tabel `notifications`.
   Future<void> addComment({
     required String ticketId,
     required String message,

@@ -2,9 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/ticket_history_model.dart';
 
+// TICKET HISTORY REPOSITORY:
+// Digunakan untuk mencatat setiap log perubahan pada tiket (audit log), seperti perubahan status tiket atau pengalihan tugas staff (assignment).
 class TicketHistoryRepository {
+  // Instance client Supabase untuk melakukan query database
   final _supabase = Supabase.instance.client;
 
+  // 1. FUNGSI MEMASUKKAN RIWAYAT TIKET (INSERT HISTORY):
+  // Cara nembak API:
+  // - Memanggil `_supabase.from('ticket_history').insert(data)` untuk menyisipkan baris log perubahan baru.
+  // - Data yang disimpan berupa ticketId, aksi (CREATED, STATUS_CHANGED, ASSIGNED), status/assignedTo lama (oldValue), status/assignedTo baru (newValue), dan pengubah (changed_by).
   Future<void> insertHistory(TicketHistoryModel history) async {
     final user = _supabase.auth.currentUser;
     final data = history.toMap();
@@ -12,8 +19,8 @@ class TicketHistoryRepository {
       data.remove('id');
     }
     
-    // Always ensure changed_by is set to the currently authenticated user's ID
-    // if available, to satisfy RLS policies checking auth.uid() = changed_by.
+    // Selalu pastikan changed_by diisi dengan ID pengguna yang terautentikasi (jika ada)
+    // agar memenuhi kebijakan Row Level Security (RLS) di Supabase.
     if (user != null) {
       data['changed_by'] = user.id;
     } else if (history.changedBy == null) {
@@ -38,6 +45,10 @@ class TicketHistoryRepository {
     }
   }
 
+  // 2. FUNGSI AMBIL RIWAYAT TIKET BERDASARKAN TIKET ID (GET HISTORY BY TICKET):
+  // Cara nembak API:
+  // - Memanggil `_supabase.from('ticket_history').select().eq('ticket_id', ticketId)` untuk mengambil log audit log berdasarkan id tiket.
+  // - Mengurutkan log dari yang terbaru hingga terlama menggunakan `.order('created_at', ascending: false)`.
   Future<List<TicketHistoryModel>> getHistoryByTicket(String ticketId) async {
     debugPrint("=== AUDIT LOG: TicketHistoryRepository.getHistoryByTicket called ===");
     debugPrint("=== AUDIT LOG: Ticket ID sent to repository: $ticketId ===");

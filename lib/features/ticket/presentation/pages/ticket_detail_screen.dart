@@ -860,7 +860,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     final authProvider = context.read<AuthProvider>();
     final currentUserId = authProvider.userId;
     
-    final bool isClosed = ['closed', 'done', 'close'].contains(selectedStatus.toLowerCase());
+    final bool isClosed = ['closed', 'done', 'close'].contains((_savedStatus ?? '').toLowerCase());
     
     // If ticket is closed, show read-only card with completed banner
     if (isClosed) {
